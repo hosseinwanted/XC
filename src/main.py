@@ -26,7 +26,6 @@ def load_settings():
 
 SETTINGS = load_settings()
 GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
-# خواندن لیست برندها و اموجی‌ها از تنظیمات
 BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
 EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 REPORTS_DIR = "reports"
@@ -125,6 +124,8 @@ class V2RayPingTester:
             with socket.create_connection((host, port), timeout=self.timeout) as sock:
                 ping_ms = int((time.time() - start_time) * 1000)
                 return {'config': config, 'ping': ping_ms, 'host': host}
+        except (socket.timeout, ConnectionRefusedError, OSError, socket.gaierror):
+            return None
         except Exception:
             return None
 
@@ -188,7 +189,8 @@ def main():
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
             
-            new_name = f"{selected_brand} #{i:03d} | {selected_emoji} {flag} {country}"
+            # فرمت جدید نام‌گذاری
+            new_name = f"{flag} {country} #{i:04d} | {selected_brand} {selected_emoji}"
             
             original_link = res['config'].split('#')[0]
             named_config = f"{original_link}#{quote(new_name)}"
