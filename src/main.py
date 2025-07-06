@@ -24,7 +24,6 @@ def load_settings():
 
 SETTINGS = load_settings()
 GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
-# خواندن لیست برندها و اموجی‌ها از تنظیمات
 BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
 EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 
@@ -47,7 +46,8 @@ def get_sources():
     sources = SETTINGS.get("sources", {}).get("files", [])
     print("📥 شروع جمع‌آوری کانفیگ‌ها از منابع...")
     for source_path in sources:
-        url = f"https://raw.githubusercontent.com/{source_path}"
+        # اصلاح کلیدی: حذف هرگونه کاراکتر اضافه از انتهای مسیر
+        url = f"https://raw.githubusercontent.com/{source_path.strip()}"
         try:
             response = requests.get(url, timeout=30)
             response.raise_for_status()
@@ -153,7 +153,6 @@ def main():
             except socket.gaierror:
                 country, flag = "Unknown", "🌐"
 
-            # --- بخش جدید: انتخاب تصادفی برند و اموجی ---
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
             
