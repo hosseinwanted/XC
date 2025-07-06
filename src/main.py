@@ -75,6 +75,7 @@ def decode_base64_configs(configs):
     """محتوای Base64 را دیکود می‌کند."""
     decoded_configs = []
     for config in configs:
+        # اگر خط یک لینک اشتراک Base64 بود
         if not any(proto in config for proto in SETTINGS.get("protocols", [])):
             try:
                 padding = '=' * (-len(config) % 4)
@@ -126,21 +127,33 @@ class FastHandshakeTester:
         return passed_configs
 
 def deep_test_with_sing_box(configs):
-    """مرحله دوم: تست عمیق با ابزار sing-box."""
+    """مرحله دوم: تست عمیق با ابزار sing-box (روش اصلاح شده و قابل اعتماد)."""
     print(f"مرحله ۲ (تست عمیق با sing-box) برای {len(configs)} کانفیگ شروع شد...")
     
-    # نوشتن کانفیگ‌های ورودی در یک فایل موقت
-    with open("temp_configs.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(configs))
+    # ساخت فایل کانفیگ برای sing-box
+    outbounds = []
+    tags_to_test = []
+    
+    for i, config_link in enumerate(configs):
+        tag = f"proxy_{i}"
+        outbounds.append({
+            "type": "url",
+            "tag": tag,
+            "url": config_link
+        })
+        tags_to_test.append(tag)
+
+    singbox_config = {
+        "outbounds": outbounds
+    }
+
+    with open("singbox_config.json", "w") as f:
+        json.dump(singbox_config, f)
 
     try:
-        # اجرای دستور urltest با استفاده از فایل ورودی
-        # این روش استاندارد و ساده برای تست دسته‌ای است
-        command = ['./sing-box', 'urltest', '-f', 'temp_configs.txt']
-        process = subprocess.run(
-            command,
-            capture_output=True, text=True, timeout=300 # ۵ دقیقه مهلت برای کل تست
-        )
+        # اجرای دستور urltest با استفاده از فایل کانفیگ
+        command = ['./sing-box', 'urltest', '-c', 'singbox_config.json']
+        process = subprocess.run(command, capture_output=True, text=True, timeout=300)
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         print(f"خطای بحرانی در اجرای sing-box: {e}")
         return []
@@ -148,25 +161,21 @@ def deep_test_with_sing_box(configs):
     results = []
     output_lines = process.stdout.strip().split('\n')
     
-    # عبارت منظم برای استخراج تگ و پینگ از خروجی
-    # مثال خروجی: vless-123   153 ms
-    result_regex = re.compile(r"([\w-]+)\s+(\d+)\s+ms")
+    # مثال خروجی: proxy_10 	 245 ms
+    result_regex = re.compile(r"(\w+_\d+)\s+(\d+)\s+ms")
     
-    # sing-box به صورت خودکار به هر لینک یک تگ می‌دهد (مثلا vless-1, trojan-2)
-    # ما باید لینک اصلی را بر اساس این تگ پیدا کنیم
-    config_map = {f"{config.split('://')[0]}-{i}": config for i, config in enumerate(configs)}
-
     for line in output_lines:
         match = result_regex.search(line)
         if match:
             tag = match.group(1)
             ping_ms = int(match.group(2))
-            
-            # پیدا کردن کانفیگ اصلی با استفاده از تگ
-            original_config = next((cfg for key, cfg in config_map.items() if key.startswith(tag)), None)
-            
-            if original_config:
+            try:
+                # استخراج ایندکس از تگ (مثلا از 'proxy_123' عدد 123 را در می‌آورد)
+                index = int(tag.split('_')[1])
+                original_config = configs[index]
                 results.append({'config': original_config, 'ping': ping_ms})
+            except (IndexError, ValueError):
+                continue
 
     print(f"تست عمیق کامل شد. {len(results)} کانفیگ سالم تایید شد.")
     return sorted(results, key=lambda x: x['ping'])
