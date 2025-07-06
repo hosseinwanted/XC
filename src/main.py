@@ -23,24 +23,50 @@ def load_settings():
 
 SETTINGS = load_settings()
 
-# --- بخش جمع‌آوری کانفیگ‌ها از منابع ---
+# --- بخش ابزارهای کمکی ---
+
+def create_output_dirs():
+    """تمام پوشه‌های خروجی مورد نیاز را ایجاد می‌کند."""
+    base_dir = SETTINGS.get("out_dir", "subscriptions")
+    dirs_to_create = [
+        base_dir,
+        os.path.join(base_dir, "v2ray", "subs"),
+        os.path.join(base_dir, "base64", "subs"),
+        os.path.join(base_dir, "filtered", "subs"),
+        os.path.join(base_dir, "warp")
+    ]
+    for d in dirs_to_create:
+        os.makedirs(d, exist_ok=True)
+    return base_dir
+
+def save_split_files(configs, out_path, lines_per_file, is_base64=False):
+    """لیست کانفیگ‌ها را به فایل‌های کوچکتر تقسیم و ذخیره می‌کند."""
+    for i, chunk_start in enumerate(range(0, len(configs), lines_per_file)):
+        chunk = configs[chunk_start:chunk_start + lines_per_file]
+        content = "\n".join(chunk)
+        if is_base64:
+            content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+        
+        file_name = f"sub{i+1}.txt"
+        with open(os.path.join(out_path, file_name), "w", encoding="utf-8") as f:
+            f.write(content)
+
+# --- بخش جمع‌آوری کانفیگ‌ها ---
 
 def get_content_from_url(url):
     """محتوا را از یک URL دریافت می‌کند."""
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()  # بررسی خطاهای HTTP
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
         return response.text
     except requests.RequestException as e:
         print(f"خطا در دریافت محتوا از {url}: {e}")
         return None
 
 def get_all_sources_content():
-    """تمام کانفیگ‌ها را از منابع تعریف شده در settings.json جمع‌آوری می‌کند."""
+    """تمام کانفیگ‌ها را از منابع جمع‌آوری می‌کند."""
     all_configs = []
     sources = SETTINGS.get("sources", {})
-    
-    # پردازش منابع از نوع file
     for file_path in sources.get("files", []):
         url = f"https://raw.githubusercontent.com/{file_path}"
         content = get_content_from_url(url)
@@ -51,18 +77,15 @@ def get_all_sources_content():
     return all_configs
 
 def decode_base64_configs(configs):
-    """لیستی از کانفیگ‌ها را می‌گیرد و محتوای Base64 را دیکود می‌کند."""
+    """محتوای Base64 را دیکود می‌کند."""
     decoded_configs = []
     for config in configs:
-        # اگر خط یک لینک اشتراک Base64 بود
         if not any(proto in config for proto in SETTINGS.get("protocols", [])):
             try:
-                # اضافه کردن padding در صورت نیاز
                 padding = '=' * (-len(config) % 4)
                 decoded_content = base64.b64decode(config + padding).decode('utf-8')
                 decoded_configs.extend(decoded_content.splitlines())
-            except (base64.binascii.Error, UnicodeDecodeError):
-                # اگر دیکود نشد، احتمالا لینک مستقیم است
+            except Exception:
                 decoded_configs.append(config)
         else:
             decoded_configs.append(config)
@@ -71,51 +94,35 @@ def decode_base64_configs(configs):
 # --- بخش تست و ارزیابی کانفیگ‌ها ---
 
 class V2RayPingTester:
-    """
-    این کلاس کانفیگ‌های V2Ray را برای اتصال TCP (و TLS) تست می‌کند.
-    """
     def __init__(self, configs, timeout=5):
         self.configs = configs
         self.timeout = timeout
-        self.max_threads = 200 # افزایش تعداد تردها برای سرعت بیشتر
+        self.max_threads = 200
 
     def parse_config(self, config_link):
-        """هاست، پورت و وضعیت TLS را از لینک کانفیگ استخراج می‌کند."""
         try:
-            if "://" not in config_link:
-                return None
-                
+            if "://" not in config_link: return None
             protocol = config_link.split("://")[0]
-            if protocol not in SETTINGS.get("protocols", []):
-                return None
-
+            if protocol not in SETTINGS.get("protocols", []): return None
             uri_part = config_link.split('://')[1]
             main_part = uri_part.split('#')[0]
             host_part = main_part.split('?')[0]
-
-            if '@' in host_part:
-                host_port_str = host_part.split('@')[1]
-            else:
-                host_port_str = host_part
-
+            if '@' in host_part: host_port_str = host_part.split('@')[1]
+            else: host_port_str = host_part
             if ':' in host_port_str:
-                host = host_port_str.rsplit(':', 1)[0].strip("[]") # حذف براکت برای آدرس IPv6
+                host = host_port_str.rsplit(':', 1)[0].strip("[]")
                 port = int(host_port_str.rsplit(':', 1)[1])
             else:
                 host = host_port_str
-                port = 443 # پورت پیش‌فرض برای TLS
-
+                port = 443
             use_tls = 'security=tls' in main_part.lower() or port == 443
             return host, port, use_tls
         except Exception:
             return None
 
     def test_single(self, config):
-        """یک کانفیگ را تست می‌کند."""
         parsed_data = self.parse_config(config)
-        if not parsed_data or not parsed_data[0]:
-            return None
-
+        if not parsed_data or not parsed_data[0]: return None
         host, port, use_tls = parsed_data
         try:
             start_time = time.time()
@@ -130,7 +137,6 @@ class V2RayPingTester:
             return None
 
     def test_all(self):
-        """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
         reachable_configs = []
         with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
@@ -138,92 +144,98 @@ class V2RayPingTester:
                 result = future.result()
                 if result:
                     reachable_configs.append(result)
-                # نمایش پیشرفت
                 print(f"\rتست کانفیگ‌ها: {i+1}/{len(self.configs)}", end="")
         print("\nتست کامل شد.")
-        
-        # مرتب‌سازی نتایج بر اساس پینگ از کم به زیاد
         return sorted(reachable_configs, key=lambda x: x['ping'])
 
 # --- بخش اصلی و اجرای برنامه ---
 
 def main():
-    """تابع اصلی برای اجرای کل فرآیند."""
     start_time = time.time()
     
-    # ۱. دریافت و پاک‌سازی کانفیگ‌ها
+    # ۱. ایجاد پوشه‌های خروجی
+    base_out_dir = create_output_dirs()
+    
+    # ۲. دریافت و پاک‌سازی کانفیگ‌ها
     raw_configs = get_all_sources_content()
     decoded_configs = decode_base64_configs(raw_configs)
     
     unique_configs = sorted(list(set(filter(None, decoded_configs))))
-    valid_protocol_configs = [
-        c for c in unique_configs if any(p in c for p in SETTINGS.get("protocols", []))
-    ]
+    
+    # ۳. تفکیک کانفیگ‌های Warp
+    warp_configs = [c for c in unique_configs if c.startswith("warp://")]
+    v2ray_configs = [c for c in unique_configs if not c.startswith("warp://")]
+    
+    valid_protocol_configs = [c for c in v2ray_configs if any(p in c for p in SETTINGS.get("protocols", []))]
     
     limit = SETTINGS.get("all_configs_limit", 3000)
     configs_to_test = valid_protocol_configs[:limit]
     
-    print(f"تعداد {len(configs_to_test)} کانفیگ یکتا برای تست آماده شد.")
+    print(f"تعداد {len(configs_to_test)} کانفیگ V2Ray و {len(warp_configs)} کانفیگ Warp برای پردازش آماده شد.")
 
-    # ۲. تست کانفیگ‌ها
+    # ۴. تست کانفیگ‌های V2Ray
     tester = V2RayPingTester(configs_to_test, timeout=SETTINGS.get("timeout", 5))
     reachable_results = tester.test_all()
     
     print(f"تعداد {len(reachable_results)} کانفیگ سالم پیدا شد.")
 
-    # ۳. نوشتن فایل‌های خروجی
-    out_dir = SETTINGS.get("out_dir", "subscriptions")
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    # ۵. نوشتن فایل‌های خروجی
+    
+    # --- پردازش و ذخیره کانفیگ‌های V2Ray ---
+    v2ray_dir = os.path.join(base_out_dir, "v2ray")
+    base64_dir = os.path.join(base_out_dir, "base64")
+    
+    all_v2_configs = [res['config'] for res in reachable_results]
+    all_v2_str = "\n".join(all_v2_configs)
+    
+    # ذخیره در v2ray/all_sub.txt
+    with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
+        f.write(all_v2_str)
+    # ذخیره نسخه Base64
+    with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
+        f.write(base64.b64encode(all_v2_str.encode("utf-8")).decode("utf-8"))
 
-    # ساخت فایل all_sub.txt
-    all_configs_str = "\n".join([res['config'] for res in reachable_results])
-    with open(os.path.join(out_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
-        f.write(all_configs_str)
-    with open(os.path.join(out_dir, "all_sub_b64.txt"), "w", encoding="utf-8") as f:
-        f.write(base64.b64encode(all_configs_str.encode("utf-8")).decode("utf-8"))
-
-    # ساخت فایل super_sub.txt
+    # ذخیره فایل‌های تکه‌تکه شده
+    lines_per_file = SETTINGS.get("lines_per_file", 200)
+    save_split_files(all_v2_configs, os.path.join(v2ray_dir, "subs"), lines_per_file, is_base64=False)
+    save_split_files(all_v2_configs, os.path.join(base64_dir, "subs"), lines_per_file, is_base64=True)
+    
+    # ذخیره super-sub
     super_limit = SETTINGS.get("supersub_configs_limit", 200)
-    super_configs = reachable_results[:super_limit]
-    super_configs_str = "\n".join([res['config'] for res in super_configs])
-    with open(os.path.join(out_dir, "super_sub.txt"), "w", encoding="utf-8") as f:
+    super_configs = all_v2_configs[:super_limit]
+    super_configs_str = "\n".join(super_configs)
+    with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f:
         f.write(super_configs_str)
-    with open(os.path.join(out_dir, "super_sub_b64.txt"), "w", encoding="utf-8") as f:
-        f.write(base64.b64encode(super_configs_str.encode("utf-8")).decode("utf-8"))
 
-    # --- بخش جدید: ساخت فایل‌های اشتراک بر اساس پروتکل ---
-    print("\nدر حال ساخت فایل‌های اشتراک بر اساس پروتکل...")
-    protocol_configs = {}
+    # --- پردازش و ذخیره کانفیگ‌های Warp ---
+    if warp_configs:
+        warp_str = "\n".join(warp_configs)
+        with open(os.path.join(base_out_dir, "warp", "all_sub.txt"), "w", encoding="utf-8") as f:
+            f.write(warp_str)
+        print(f"✅ فایل اشتراک Warp با {len(warp_configs)} کانفیگ ساخته شد.")
+
+    # --- پردازش و ذخیره بر اساس پروتکل ---
+    filtered_dir = os.path.join(base_out_dir, "filtered", "subs")
+    protocol_groups = {}
     for res in reachable_results:
         config_link = res['config']
         try:
             protocol = config_link.split("://")[0]
-            if protocol not in protocol_configs:
-                protocol_configs[protocol] = []
-            protocol_configs[protocol].append(config_link)
+            if protocol not in protocol_groups:
+                protocol_groups[protocol] = []
+            protocol_groups[protocol].append(config_link)
         except IndexError:
-            continue # اگر کانفیگ فرمت درستی نداشته باشد، از آن رد شو
+            continue
 
-    for protocol, configs in protocol_configs.items():
+    for protocol, configs in protocol_groups.items():
         if configs:
             protocol_str = "\n".join(configs)
-            # ساخت فایل متنی
-            file_path = os.path.join(out_dir, f"{protocol}_sub.txt")
+            file_path = os.path.join(filtered_dir, f"{protocol}.txt")
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(protocol_str)
-            # ساخت نسخه Base64
-            b64_file_path = os.path.join(out_dir, f"{protocol}_sub_b64.txt")
-            with open(b64_file_path, "w", encoding="utf-8") as f:
-                f.write(base64.b64encode(protocol_str.encode("utf-8")).decode("utf-8"))
             print(f"✅ فایل اشتراک برای پروتکل '{protocol}' با {len(configs)} کانفیگ ساخته شد.")
-    # --- پایان بخش جدید ---
 
-    print(f"\nفایل‌های اشتراک در پوشه '{out_dir}' ذخیره شدند.")
-    
-    end_time = time.time()
-    print(f"کل فرآیند در {end_time - start_time:.2f} ثانیه به پایان رسید.")
-
+    print(f"\nکل فرآیند در {time.time() - start_time:.2f} ثانیه به پایان رسید.")
 
 if __name__ == "__main__":
     main()
