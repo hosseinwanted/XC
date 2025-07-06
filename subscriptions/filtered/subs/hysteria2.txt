@@ -1,0 +1,10 @@
+hysteria2://862e90e1-2f26-4506-b8b9-0adf20da05fc@40.233.73.221:47262?insecure=1&sni=www.bing.com#t.me/V2XCore%20%2311298%20%7C%20%E2%9C%A8%20%F0%9F%87%A8%F0%9F%87%A6%20CA
+hysteria2://123456@192.3.85.237:443?insecure=1&sni=bing.com#%40V2XCore%20%2311830%20%7C%20%E2%9A%A1%EF%B8%8F%20%F0%9F%87%BA%F0%9F%87%B8%20US
+hysteria2://123456@192.3.85.237:443?insecure=1&sni=bing.com#%40V2XCore%20%2311842%20%7C%20%F0%9F%94%B0%20%F0%9F%87%BA%F0%9F%87%B8%20US
+hysteria2://def789-0123-4567-8901-2345abcdef67@azadnet.t.me:443?sni=www.speedtest.net#%40V2XCore%20%2312212%20%7C%20%F0%9F%8E%AF%20%F0%9F%87%AC%F0%9F%87%A7%20GB
+hysteria2://def789-0123-4567-8901-2345abcdef67@azadnet.t.me:443?sni=www.speedtest.net#%40V2XCore%20%2312240%20%7C%20%F0%9F%94%B0%20%F0%9F%87%AC%F0%9F%87%A7%20GB
+hysteria2://dongtaiwang.com@51.159.111.32:31180?insecure=1&sni=apple.com#%40V2XCore%20%2312523%20%7C%20%E2%9A%A1%EF%B8%8F%20%F0%9F%87%AB%F0%9F%87%B7%20FR
+hysteria2://dongtaiwang.com@51.159.111.32:31180?insecure=1&sni=apple.com#t.me/V2XCore%20%2312561%20%7C%20%F0%9F%92%8E%20%F0%9F%87%AB%F0%9F%87%B7%20FR
+hysteria2://a2678c97b8d79059@46.62.152.236:443?insecure=1&obfs=salamander&obfs-password=9242a8bf#t.me/V2XCore%20%2312766%20%7C%20%E2%9A%9C%EF%B8%8F%20%F0%9F%87%AB%F0%9F%87%AE%20FI
+hysteria2://a2678c97b8d79059@46.62.152.236:443?insecure=1&obfs=salamander&obfs-password=9242a8bf#%40V2XCore%20%2312788%20%7C%20%F0%9F%92%8E%20%F0%9F%87%AB%F0%9F%87%AE%20FI
+hysteria2://a2678c97b8d79059@46.62.152.236:443?insecure=1&obfs=salamander&obfs-password=9242a8bf#%40V2XCore%20%2312797%20%7C%20%F0%9F%8E%AF%20%F0%9F%87%AB%F0%9F%87%AE%20FI

@@ -1,1 +1,1 @@
-trojan://vvip-periantara@38.9.140.66:443?security=tls&sni=id3tr.jagoan.vip#%F0%9F%87%AE%F0%9F%87%A9ID-38.9.140.66-4098
+vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&encryption=none&headerType=&type=tcp#%40V2XCore%20%2313633%20%7C%20%F0%9F%9A%80%20%F0%9F%87%AE%F0%9F%87%A9%20ID
