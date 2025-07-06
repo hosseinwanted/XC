@@ -1,0 +1,27 @@
+{
+  "raw_repo": "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main",
+  "tag": "⚡ My-Configs | ",
+  "out_dir": "subscriptions",
+  "all_configs_limit": 3000,
+  "supersub_configs_limit": 200,
+  "timeout": 5,
+  "protocols": [
+    "vmess",
+    "vless",
+    "trojan",
+    "ss",
+    "ssr",
+    "tuic",
+    "hy2"
+  ],
+  "sources": {
+    "files": [
+      "ALIILAPRO/v2rayNG-Config/main/sub.txt",
+      "mahdibland/V2RayAggregator/master/sub/sub_merge_base64.txt",
+      "yebekhe/TVC/main/subscriptions/xray/base64/mix",
+      "mfuu/v2ray/master/v2ray"
+    ],
+    "dirs": [],
+    "warp": []
+  }
+}
