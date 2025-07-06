@@ -5,8 +5,6 @@ import requests
 import socket
 import ssl
 import time
-import re
-import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- بخش تنظیمات و بارگذاری اولیه ---
@@ -88,18 +86,17 @@ def decode_base64_configs(configs):
 
 # --- بخش تست و ارزیابی کانفیگ‌ها ---
 
-class FastHandshakeTester:
-    """مرحله اول: تست سریع برای حذف سرورهای مرده."""
-    def __init__(self, configs, timeout=3):
+class V2RayPingTester:
+    """تست سریع اتصال برای سنجش در دسترس بودن و پینگ اولیه."""
+    def __init__(self, configs, timeout=4):
         self.configs = configs
         self.timeout = timeout
         self.max_threads = 400
 
-    def test_single(self, config):
-        """تست اتصال TCP ساده."""
+    def parse_config(self, config_link):
         try:
-            if "://" not in config: return None
-            uri_part = config.split('://')[1]
+            if "://" not in config_link: return None
+            uri_part = config_link.split('://')[1]
             host_part = uri_part.split('#')[0].split('?')[0]
             if '@' in host_part: host_port_str = host_part.split('@')[1]
             else: host_port_str = host_part
@@ -109,81 +106,35 @@ class FastHandshakeTester:
             else:
                 host = host_port_str
                 port = 443
+            return host, port
+        except Exception:
+            return None
+
+    def test_single(self, config):
+        parsed_data = self.parse_config(config)
+        if not parsed_data: return None
+        host, port = parsed_data
+        try:
+            start_time = time.time()
             sock = socket.create_connection((host, port), timeout=self.timeout)
+            ping_ms = int((time.time() - start_time) * 1000)
             sock.close()
-            return config
+            return {'config': config, 'ping': ping_ms}
         except Exception:
             return None
 
     def run(self):
         """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
-        passed_configs = []
+        reachable_configs = []
         with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
             for i, future in enumerate(as_completed(future_to_config)):
-                if future.result():
-                    passed_configs.append(future.result())
-                print(f"\rمرحله ۱ (فیلتر سریع): {i+1}/{len(self.configs)}", end="")
-        print(f"\nفیلتر سریع کامل شد. {len(passed_configs)} کانفیگ به مرحله بعد راه یافتند.")
-        return passed_configs
-
-def deep_test_with_sing_box(configs):
-    """مرحله دوم: تست عمیق با ابزار sing-box (روش اصلاح شده و قابل اعتماد)."""
-    print(f"مرحله ۲ (تست عمیق با sing-box) برای {len(configs)} کانفیگ شروع شد...")
-    
-    # نوشتن کانفیگ‌های ورودی در یک فایل موقت
-    with open("nodes.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(configs))
-
-    try:
-        # اجرای دستور urltest با استفاده از فایل ورودی
-        # این روش استاندارد و ساده برای تست دسته‌ای است
-        command = ['./sing-box', 'urltest', '-i', 'nodes.txt', '-o', 'results.json']
-        process = subprocess.run(
-            command,
-            capture_output=True, text=True, timeout=600 # ۱۰ دقیقه مهلت برای کل تست
-        )
-        
-        # چاپ کردن خطاهای احتمالی از خود sing-box برای دیباگ
-        if process.stderr:
-            print("\n--- گزارش stderr از sing-box ---")
-            print(process.stderr)
-            print("-----------------------------\n")
-
-    except FileNotFoundError:
-        print("خطای بحرانی: ابزار تست sing-box پیدا نشد!")
-        return []
-    except subprocess.TimeoutExpired:
-        print("خطای بحرانی: زمان اجرای ابزار تست به پایان رسید!")
-        return []
-
-    # پردازش خروجی از فایل results.json
-    try:
-        with open('results.json', 'r') as f:
-            test_results = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        print("فایل نتایج (results.json) توسط sing-box ایجاد نشد یا معتبر نیست.")
-        return []
-
-    results = []
-    for item in test_results:
-        # تگ کانفیگ (مثلا vmess-1)
-        tag = item.get('tag')
-        # پینگ (delay)
-        delay = item.get('delay')
-        
-        if tag and delay > 0:
-            try:
-                # استخراج ایندکس از تگ
-                index = int(tag.split('-')[1])
-                if index < len(configs):
-                    original_config = configs[index]
-                    results.append({'config': original_config, 'ping': delay})
-            except (IndexError, ValueError):
-                continue
-
-    print(f"تست عمیق کامل شد. {len(results)} کانفیگ سالم تایید شد.")
-    return sorted(results, key=lambda x: x['ping'])
+                result = future.result()
+                if result:
+                    reachable_configs.append(result)
+                print(f"\rتست کانفیگ‌ها: {i+1}/{len(self.configs)}", end="")
+        print(f"\nتست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
+        return sorted(reachable_configs, key=lambda x: x['ping'])
 
 # --- بخش اصلی و اجرای برنامه ---
 
@@ -199,23 +150,17 @@ def main():
     v2ray_configs = [c for c in unique_configs if not c.startswith("warp://") and any(p in c for p in SETTINGS.get("protocols", []))]
     
     limit = SETTINGS.get("all_configs_limit", 4000)
-    configs_to_fast_test = v2ray_configs[:limit]
+    configs_to_test = v2ray_configs[:limit]
     
-    print(f"تعداد {len(configs_to_fast_test)} کانفیگ برای فیلتر سریع آماده شد.")
+    print(f"تعداد {len(configs_to_test)} کانفیگ برای تست آماده شد.")
 
-    fast_tester = FastHandshakeTester(configs_to_fast_test)
-    passed_fast_test = fast_tester.run()
+    tester = V2RayPingTester(configs_to_test, timeout=SETTINGS.get("timeout", 4))
+    final_results = tester.run()
     
-    if not passed_fast_test:
-        print("هیچ کانفیگی از فیلتر سریع عبور نکرد.")
-        final_results = []
-    else:
-        final_results = deep_test_with_sing_box(passed_fast_test)
-
     if not final_results:
-        print("هیچ کانفیگی در تست عمیق سالم نبود.")
+        print("هیچ کانفیگ سالمی پیدا نشد.")
     else:
-        # نوشتن فایل‌های خروجی بر اساس نتایج دقیق
+        # نوشتن فایل‌های خروجی
         all_final_configs = [res['config'] for res in final_results]
         v2ray_dir = os.path.join(base_out_dir, "v2ray")
         base64_dir = os.path.join(base_out_dir, "base64")
@@ -231,7 +176,8 @@ def main():
         with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f: f.write(super_configs_str)
         filtered_dir = os.path.join(base_out_dir, "filtered", "subs")
         protocol_groups = {}
-        for config_link in all_final_configs:
+        for res in final_results:
+            config_link = res['config']
             try:
                 protocol = config_link.split("://")[0]
                 if protocol not in protocol_groups: protocol_groups[protocol] = []
@@ -252,4 +198,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
