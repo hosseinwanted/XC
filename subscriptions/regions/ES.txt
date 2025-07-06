@@ -1,6 +1,8 @@
+trojan://trojan@109.234.211.66:8443?security=tls&sni=store.timimi.dpdns.org#%F0%9F%8F%81RELAY-109.234.211.66-0752
 trojan://trojan@109.234.211.66:8443?allowInsecure=0&sni=store.timimi.dpdns.org&ws=1&wspath=%2F#ES_speednode_0025
 vless://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@185.238.228.63:8880?sni=jp.laoyoutiao.link&type=ws&host=jp.laoyoutiao.link&path=/Telegram🇨🇳&allowInsecure=0#🇸🇬[openproxylist.com]
 ss://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@185.238.228.63:8880?sni=jp.laoyoutiao.link&type=ws&host=jp.laoyoutiao.link&path=/Telegram🇨🇳&allowInsecure=0#🇸🇬[openproxylist.com]
-trojan://trojan@109.234.211.66:8443?security=tls&sni=store.timimi.dpdns.org#%F0%9F%8F%81RELAY-109.234.211.66-0752
+ss://YWVzLTI1Ni1jZmI6VE4yWXFnaHhlRkRLWmZMVQ==@5.188.181.201:9037#%F0%9F%87%AA%F0%9F%87%B8ES-5.188.181.201-8181
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTowUnNyY0ZKMXZPc1dFcWczUDU1aHZhYWNLZnVTaFQwY2MxaDB0OEFEME5BOHUxdVI=@92.38.171.215:31348#%F0%9F%87%AA%F0%9F%87%B8ES-92.38.171.215-0387
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpmOGY3YUN6Y1BLYnNGOHAz@45.154.206.192:990#%F0%9F%87%AA%F0%9F%87%B8ES-45.154.206.192-0476
+ss://YWVzLTI1Ni1jZmI6QndjQVVaazhoVUZBa0RHTg==@5.188.181.201:9031#%F0%9F%87%AA%F0%9F%87%B8ES-5.188.181.201-8182
