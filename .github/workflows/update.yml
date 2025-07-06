@@ -1,4 +1,4 @@
-name: Update Config Sources
+name: Update V2Ray Subscriptions
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-sources:
+  update-configs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,21 +20,32 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4
+      - name: Download GeoIP Database
+        run: |
+          echo "Downloading GeoIP Database..."
+          wget -q https://git.io/GeoLite2-Country.mmdb -O GeoLite2-Country.mmdb
+          echo "GeoIP DB is ready."
 
-      # از همان اسکریپت قبلی برای جمع‌آوری استفاده می‌کنیم
-      - name: Run Collection Script
-        run: python src/main.py 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Main Script (Collect & Test)
+        run: python src/main.py
+
+      - name: Generate README.md
+        run: python src/generate_readme.py
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          # فقط فایل‌های داخل پوشه subscriptions را اضافه کن
-          git add subscriptions/
+          git add subscriptions/ reports/ README.md
           if ! git diff --staged --quiet; then
-            git commit -m "✅ Update Config Sources | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
+            git commit -m "✅ Update Subscriptions & Stats | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
             git push
           else
             echo "No changes to commit."
