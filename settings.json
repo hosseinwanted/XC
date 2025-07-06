@@ -10,9 +10,9 @@
   ],
   "protocols": ["vmess", "vless", "trojan", "ss"],
   "sources": {
-    "files":     "files": [
+    "files": [
       "barry-far/V2ray-Configs/main/All_Configs_Sub.txt",
-    "ALIILAPRO/v2rayNG-Config/main/sub.txt",
+      "ALIILAPRO/v2rayNG-Config/main/sub.txt",
       "mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
       "MrPooyaX/VpnsFoss/main/sub/sub.txt",
       "ermaozi/get_subscribe/main/subscribe/v2ray.txt",
