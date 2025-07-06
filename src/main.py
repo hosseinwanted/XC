@@ -97,8 +97,9 @@ class FastHandshakeTester:
 
     def test_single(self, config):
         try:
-            if "://" not in config_link: return None
-            uri_part = config_link.split('://')[1]
+            # --- رفع اشکال: متغیر از config به config_link تغییر نام داده شده بود ---
+            if "://" not in config: return None
+            uri_part = config.split('://')[1]
             host_part = uri_part.split('#')[0].split('?')[0]
             if '@' in host_part: host_port_str = host_part.split('@')[1]
             else: host_port_str = host_part
@@ -134,18 +135,32 @@ def deep_test_with_sing_box(configs):
     config_map = {}
     for i, config_link in enumerate(configs):
         tag = f"proxy_{i}"
-        outbounds.append({"type": "urltest", "tag": tag, "outbounds": [config_link]})
+        # برای تست URL، هر کانفیگ باید در یک outbound جداگانه باشد
+        outbounds.append({"type": "selector", "tag": tag, "outbounds": [config_link]})
         config_map[tag] = config_link
 
     singbox_config = {
         "outbounds": outbounds
     }
 
+    # ایجاد یک فایل کانفیگ موقت برای sing-box
     with open("singbox_config.json", "w") as f:
         json.dump(singbox_config, f)
 
+    # ایجاد فایل کانفیگ دیگر برای urltest
+    urltest_config = {
+        "outbounds": [item['tag'] for item in outbounds],
+        "url": "http://www.gstatic.com/generate_204",
+        "interval": "10s"
+    }
+
+    with open("urltest_config.json", "w") as f:
+        json.dump(urltest_config, f)
+
+
     try:
-        command = ['./sing-box', 'urltest', '-c', 'singbox_config.json']
+        # اجرای دستور urltest با استفاده از کانفیگ‌های ساخته شده
+        command = ['./sing-box', 'urltest', '-c', 'singbox_config.json', '-config-test', 'urltest_config.json']
         process = subprocess.run(command, capture_output=True, text=True, timeout=300)
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         print(f"خطای بحرانی در اجرای sing-box: {e}")
