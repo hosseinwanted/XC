@@ -75,7 +75,6 @@ def decode_base64_configs(configs):
     """محتوای Base64 را دیکود می‌کند."""
     decoded_configs = []
     for config in configs:
-        # اگر خط یک لینک اشتراک Base64 بود
         if not any(proto in config for proto in SETTINGS.get("protocols", [])):
             try:
                 padding = '=' * (-len(config) % 4)
@@ -97,6 +96,7 @@ class FastHandshakeTester:
         self.max_threads = 400
 
     def test_single(self, config):
+        """تست اتصال TCP ساده."""
         try:
             if "://" not in config: return None
             uri_part = config.split('://')[1]
@@ -116,6 +116,7 @@ class FastHandshakeTester:
             return None
 
     def run(self):
+        """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
         passed_configs = []
         with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
@@ -123,57 +124,61 @@ class FastHandshakeTester:
                 if future.result():
                     passed_configs.append(future.result())
                 print(f"\rمرحله ۱ (فیلتر سریع): {i+1}/{len(self.configs)}", end="")
-        print("\nفیلتر سریع کامل شد.")
+        print(f"\nفیلتر سریع کامل شد. {len(passed_configs)} کانفیگ به مرحله بعد راه یافتند.")
         return passed_configs
 
 def deep_test_with_sing_box(configs):
     """مرحله دوم: تست عمیق با ابزار sing-box (روش اصلاح شده و قابل اعتماد)."""
     print(f"مرحله ۲ (تست عمیق با sing-box) برای {len(configs)} کانفیگ شروع شد...")
     
-    # ساخت فایل کانفیگ برای sing-box
-    outbounds = []
-    tags_to_test = []
-    
-    for i, config_link in enumerate(configs):
-        tag = f"proxy_{i}"
-        outbounds.append({
-            "type": "url",
-            "tag": tag,
-            "url": config_link
-        })
-        tags_to_test.append(tag)
-
-    singbox_config = {
-        "outbounds": outbounds
-    }
-
-    with open("singbox_config.json", "w") as f:
-        json.dump(singbox_config, f)
+    # نوشتن کانفیگ‌های ورودی در یک فایل موقت
+    with open("nodes.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(configs))
 
     try:
-        # اجرای دستور urltest با استفاده از فایل کانفیگ
-        command = ['./sing-box', 'urltest', '-c', 'singbox_config.json']
-        process = subprocess.run(command, capture_output=True, text=True, timeout=300)
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        print(f"خطای بحرانی در اجرای sing-box: {e}")
+        # اجرای دستور urltest با استفاده از فایل ورودی
+        # این روش استاندارد و ساده برای تست دسته‌ای است
+        command = ['./sing-box', 'urltest', '-i', 'nodes.txt', '-o', 'results.json']
+        process = subprocess.run(
+            command,
+            capture_output=True, text=True, timeout=600 # ۱۰ دقیقه مهلت برای کل تست
+        )
+        
+        # چاپ کردن خطاهای احتمالی از خود sing-box برای دیباگ
+        if process.stderr:
+            print("\n--- گزارش stderr از sing-box ---")
+            print(process.stderr)
+            print("-----------------------------\n")
+
+    except FileNotFoundError:
+        print("خطای بحرانی: ابزار تست sing-box پیدا نشد!")
+        return []
+    except subprocess.TimeoutExpired:
+        print("خطای بحرانی: زمان اجرای ابزار تست به پایان رسید!")
+        return []
+
+    # پردازش خروجی از فایل results.json
+    try:
+        with open('results.json', 'r') as f:
+            test_results = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("فایل نتایج (results.json) توسط sing-box ایجاد نشد یا معتبر نیست.")
         return []
 
     results = []
-    output_lines = process.stdout.strip().split('\n')
-    
-    # مثال خروجی: proxy_10 	 245 ms
-    result_regex = re.compile(r"(\w+_\d+)\s+(\d+)\s+ms")
-    
-    for line in output_lines:
-        match = result_regex.search(line)
-        if match:
-            tag = match.group(1)
-            ping_ms = int(match.group(2))
+    for item in test_results:
+        # تگ کانفیگ (مثلا vmess-1)
+        tag = item.get('tag')
+        # پینگ (delay)
+        delay = item.get('delay')
+        
+        if tag and delay > 0:
             try:
-                # استخراج ایندکس از تگ (مثلا از 'proxy_123' عدد 123 را در می‌آورد)
-                index = int(tag.split('_')[1])
-                original_config = configs[index]
-                results.append({'config': original_config, 'ping': ping_ms})
+                # استخراج ایندکس از تگ
+                index = int(tag.split('-')[1])
+                if index < len(configs):
+                    original_config = configs[index]
+                    results.append({'config': original_config, 'ping': delay})
             except (IndexError, ValueError):
                 continue
 
@@ -247,3 +252,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
