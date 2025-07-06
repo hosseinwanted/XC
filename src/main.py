@@ -31,7 +31,8 @@ def setup_directories():
         base_dir,
         os.path.join(base_dir, "v2ray"),
         os.path.join(base_dir, "base64"),
-        os.path.join(base_dir, "regions"), # پوشه جدید برای کشورها
+        os.path.join(base_dir, "filtered", "subs"), # پوشه برای پروتکل‌ها
+        os.path.join(base_dir, "regions") # پوشه برای کشورها
     ]
     for d in dirs_to_create:
         os.makedirs(d, exist_ok=True)
@@ -130,33 +131,42 @@ def main():
     final_results = tester.run()
 
     if final_results:
-        # --- بخش جدید: دسته‌بندی بر اساس کشور ---
+        base_dir = SETTINGS.get("out_dir", "subscriptions")
+        
+        # --- دسته‌بندی بر اساس پروتکل ---
+        by_protocol = defaultdict(list)
+        for res in final_results:
+            proto = res['config'].split("://")[0]
+            by_protocol[proto].append(res['config'])
+        
+        filtered_dir = os.path.join(base_dir, "filtered", "subs")
+        for protocol, configs in by_protocol.items():
+            with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f:
+                f.write("\n".join(configs))
+        print("✅ دسته‌بندی بر اساس پروتکل کامل شد.")
+
+        # --- دسته‌بندی بر اساس کشور ---
         geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
         by_country = defaultdict(list)
-        
-        print("شروع دسته‌بندی بر اساس کشور...")
-        for res in final_results:
-            try:
-                # اگر هاست یک دامنه بود، آن را به IP تبدیل کن
-                ip = socket.gethostbyname(res['host'])
-                country = get_country(ip, geo_reader)
-                by_country[country].append(res['config'])
-            except socket.gaierror:
-                by_country["Unknown"].append(res['config'])
-        
         if geo_reader:
+            print("شروع دسته‌بندی بر اساس کشور...")
+            for res in final_results:
+                try:
+                    ip = socket.gethostbyname(res['host'])
+                    country = get_country(ip, geo_reader)
+                    by_country[country].append(res['config'])
+                except socket.gaierror:
+                    by_country["Unknown"].append(res['config'])
+            
+            regions_dir = os.path.join(base_dir, "regions")
+            for country, configs in by_country.items():
+                with open(os.path.join(regions_dir, f"{country}.txt"), "w") as f:
+                    f.write("\n".join(configs))
+            print("✅ دسته‌بندی بر اساس کشور کامل شد.")
             geo_reader.close()
-        
-        regions_dir = os.path.join(SETTINGS.get("out_dir", "subscriptions"), "regions")
-        for country, configs in by_country.items():
-            with open(os.path.join(regions_dir, f"{country}.txt"), "w", encoding="utf-8") as f:
-                f.write("\n".join(configs))
-        print("✅ دسته‌بندی بر اساس کشور کامل شد.")
-        # --- پایان بخش جدید ---
 
+        # --- ذخیره فایل‌های اصلی ---
         all_final_links = [res['config'] for res in final_results]
-        
-        base_dir = SETTINGS.get("out_dir", "subscriptions")
         v2ray_dir = os.path.join(base_dir, "v2ray")
         base64_dir = os.path.join(base_dir, "base64")
 
