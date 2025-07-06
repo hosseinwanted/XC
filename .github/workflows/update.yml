@@ -1,56 +1,51 @@
-# نام گردش کار که در بخش Actions گیت‌هاب نمایش داده می‌شود
 name: Update V2Ray Subscriptions
 
-# تعریف رویدادهایی که این گردش کار را فعال می‌کنند
 on:
-  # اجرای زمان‌بندی شده (مثلاً هر 6 ساعت)
   schedule:
-    - cron: '0 */6 * * *' # این عبارت یعنی در دقایق 0 هر 6 ساعت (00:00, 06:00, 12:00, 18:00 UTC)
-  
-  # امکان اجرای دستی از طریق تب Actions در گیت‌هاب
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 jobs:
-  # تعریف یک کار (job) به نام update-configs
   update-configs:
-    # استفاده از آخرین نسخه اوبونتو برای اجرای کار
     runs-on: ubuntu-latest
-
-    # اضافه کردن این بخش برای دادن دسترسی نوشتن به اکشن
     permissions:
       contents: write
 
     steps:
-      # مرحله ۱: دریافت کدها از مخزن
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # مرحله ۲: نصب و راه‌اندازی پایتون
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # مرحله ۳: نصب کتابخانه‌های مورد نیاز
+      # مرحله جدید: دانلود و آماده‌سازی ابزار تست تخصصی
+      - name: Download and Setup V2Ray-Ping
+        run: |
+          # دانلود آخرین نسخه ابزار از گیت‌هاب
+          wget https://github.com/hossinasaadi/v2ray-ping/releases/latest/download/v2ray-ping_linux_amd64.zip
+          # از حالت فشرده خارج کردن
+          unzip v2ray-ping_linux_amd64.zip
+          # دادن دسترسی اجرایی به فایل
+          chmod +x v2ray-ping
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # مرحله ۴: اجرای اسکریپت اصلی پایتون
       - name: Run the update script
+        # اجرای اسکریپت پایتون که حالا از ابزار تست استفاده می‌کند
         run: python src/main.py
 
-      # مرحله ۵: تنظیم تاریخ فعلی برای استفاده در پیام کامیت
       - name: Set current date
         id: date
         run: echo "date=$(date -u +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
 
-      # مرحله ۶: کامیت و پوش کردن تغییرات
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9
         with:
-          # استفاده از متغیر محیطی که در مرحله قبل تنظیم شد
           message: '✔️ Update Subscriptions | [UTC] ${{ env.date }}'
           add: 'subscriptions/*'
           author_name: GitHub Actions
