@@ -1,4 +1,4 @@
-ss://df0680ca-e43c-498d-ed86-8e196eedd012@95.164.45.90:8880?security=none&type=grpc#t.me/V2XCore%20%23259%20%7C%20%F0%9F%92%8E%20%F0%9F%87%AB%F0%9F%87%B7%20FR
-vless://df0680ca-e43c-498d-ed86-8e196eedd012@95.164.45.90:8880?security=none&type=grpc#t.me/V2XCore%20%23260%20%7C%20%F0%9F%91%91%20%F0%9F%87%AB%F0%9F%87%B7%20FR
-vless://dc8eccdb-ecfa-435f-9ac1-5dc4882e7b51@162.19.228.119:80?type=ws&host=google.com&path=/http#t.me/V2XCore%20%23261%20%7C%20%E2%9A%A1%EF%B8%8F%20%F0%9F%87%AB%F0%9F%87%B7%20FR
-ss://dc8eccdb-ecfa-435f-9ac1-5dc4882e7b51@162.19.228.119:80?type=ws&host=google.com&path=/http#t.me/V2XCore%20%23262%20%7C%20%F0%9F%8E%AF%20%F0%9F%87%AB%F0%9F%87%B7%20FR
+vless://df0680ca-e43c-498d-ed86-8e196eedd012@95.164.45.90:8880?security=none&type=grpc#%40V2XCore%20%23259%20%7C%20%F0%9F%92%8E%20%F0%9F%87%AB%F0%9F%87%B7%20FR
+ss://df0680ca-e43c-498d-ed86-8e196eedd012@95.164.45.90:8880?security=none&type=grpc#t.me/V2XCore%20%23260%20%7C%20%F0%9F%91%91%20%F0%9F%87%AB%F0%9F%87%B7%20FR
+ss://dc8eccdb-ecfa-435f-9ac1-5dc4882e7b51@162.19.228.119:80?type=ws&host=google.com&path=/http#t.me/V2XCore%20%23261%20%7C%20%F0%9F%92%8E%20%F0%9F%87%AB%F0%9F%87%B7%20FR
+vless://dc8eccdb-ecfa-435f-9ac1-5dc4882e7b51@162.19.228.119:80?type=ws&host=google.com&path=/http#%40V2XCore%20%23262%20%7C%20%F0%9F%9A%80%20%F0%9F%87%AB%F0%9F%87%B7%20FR

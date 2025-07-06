@@ -1,2 +1,2 @@
-ss://ef3f6f19-f286-4615-ba0b-63c7f9692a30@zone.iq.f2hub.ir:53403?security=&encryption=none&host=telewebion.com&headerType=http&type=tcp#%40V2XCore%20%23267%20%7C%20%F0%9F%92%8E%20%F0%9F%87%AE%F0%9F%87%B7%20IR
-vless://ef3f6f19-f286-4615-ba0b-63c7f9692a30@zone.iq.f2hub.ir:53403?security=&encryption=none&host=telewebion.com&headerType=http&type=tcp#%40V2XCore%20%23268%20%7C%20%F0%9F%9A%80%20%F0%9F%87%AE%F0%9F%87%B7%20IR
+ss://ef3f6f19-f286-4615-ba0b-63c7f9692a30@zone.iq.f2hub.ir:53403?security=&encryption=none&host=telewebion.com&headerType=http&type=tcp#%40V2XCore%20%23269%20%7C%20%F0%9F%94%B0%20%F0%9F%87%AE%F0%9F%87%B7%20IR
+vless://ef3f6f19-f286-4615-ba0b-63c7f9692a30@zone.iq.f2hub.ir:53403?security=&encryption=none&host=telewebion.com&headerType=http&type=tcp#%40V2XCore%20%23270%20%7C%20%E2%9A%A1%EF%B8%8F%20%F0%9F%87%AE%F0%9F%87%B7%20IR
