@@ -97,7 +97,6 @@ class FastHandshakeTester:
 
     def test_single(self, config):
         try:
-            # --- رفع اشکال: متغیر از config به config_link تغییر نام داده شده بود ---
             if "://" not in config: return None
             uri_part = config.split('://')[1]
             host_part = uri_part.split('#')[0].split('?')[0]
@@ -128,40 +127,20 @@ class FastHandshakeTester:
 
 def deep_test_with_sing_box(configs):
     """مرحله دوم: تست عمیق با ابزار sing-box."""
-    print("مرحله ۲ (تست عمیق با sing-box) شروع شد...")
+    print(f"مرحله ۲ (تست عمیق با sing-box) برای {len(configs)} کانفیگ شروع شد...")
     
-    # ساخت فایل کانفیگ برای sing-box
-    outbounds = []
-    config_map = {}
-    for i, config_link in enumerate(configs):
-        tag = f"proxy_{i}"
-        # برای تست URL، هر کانفیگ باید در یک outbound جداگانه باشد
-        outbounds.append({"type": "selector", "tag": tag, "outbounds": [config_link]})
-        config_map[tag] = config_link
-
-    singbox_config = {
-        "outbounds": outbounds
-    }
-
-    # ایجاد یک فایل کانفیگ موقت برای sing-box
-    with open("singbox_config.json", "w") as f:
-        json.dump(singbox_config, f)
-
-    # ایجاد فایل کانفیگ دیگر برای urltest
-    urltest_config = {
-        "outbounds": [item['tag'] for item in outbounds],
-        "url": "http://www.gstatic.com/generate_204",
-        "interval": "10s"
-    }
-
-    with open("urltest_config.json", "w") as f:
-        json.dump(urltest_config, f)
-
+    # نوشتن کانفیگ‌های ورودی در یک فایل موقت
+    with open("temp_configs.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(configs))
 
     try:
-        # اجرای دستور urltest با استفاده از کانفیگ‌های ساخته شده
-        command = ['./sing-box', 'urltest', '-c', 'singbox_config.json', '-config-test', 'urltest_config.json']
-        process = subprocess.run(command, capture_output=True, text=True, timeout=300)
+        # اجرای دستور urltest با استفاده از فایل ورودی
+        # این روش استاندارد و ساده برای تست دسته‌ای است
+        command = ['./sing-box', 'urltest', '-f', 'temp_configs.txt']
+        process = subprocess.run(
+            command,
+            capture_output=True, text=True, timeout=300 # ۵ دقیقه مهلت برای کل تست
+        )
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         print(f"خطای بحرانی در اجرای sing-box: {e}")
         return []
@@ -169,16 +148,25 @@ def deep_test_with_sing_box(configs):
     results = []
     output_lines = process.stdout.strip().split('\n')
     
-    # مثال خروجی: proxy_10 	 245 ms
-    result_regex = re.compile(r"(\w+)\s+(\d+)\s+ms")
+    # عبارت منظم برای استخراج تگ و پینگ از خروجی
+    # مثال خروجی: vless-123   153 ms
+    result_regex = re.compile(r"([\w-]+)\s+(\d+)\s+ms")
     
+    # sing-box به صورت خودکار به هر لینک یک تگ می‌دهد (مثلا vless-1, trojan-2)
+    # ما باید لینک اصلی را بر اساس این تگ پیدا کنیم
+    config_map = {f"{config.split('://')[0]}-{i}": config for i, config in enumerate(configs)}
+
     for line in output_lines:
         match = result_regex.search(line)
         if match:
             tag = match.group(1)
             ping_ms = int(match.group(2))
-            if tag in config_map:
-                results.append({'config': config_map[tag], 'ping': ping_ms})
+            
+            # پیدا کردن کانفیگ اصلی با استفاده از تگ
+            original_config = next((cfg for key, cfg in config_map.items() if key.startswith(tag)), None)
+            
+            if original_config:
+                results.append({'config': original_config, 'ping': ping_ms})
 
     print(f"تست عمیق کامل شد. {len(results)} کانفیگ سالم تایید شد.")
     return sorted(results, key=lambda x: x['ping'])
@@ -206,38 +194,40 @@ def main():
     
     if not passed_fast_test:
         print("هیچ کانفیگی از فیلتر سریع عبور نکرد.")
+        final_results = []
     else:
         final_results = deep_test_with_sing_box(passed_fast_test)
-        if not final_results:
-            print("هیچ کانفیگی در تست عمیق سالم نبود.")
-        else:
-            # نوشتن فایل‌های خروجی بر اساس نتایج دقیق
-            all_final_configs = [res['config'] for res in final_results]
-            v2ray_dir = os.path.join(base_out_dir, "v2ray")
-            base64_dir = os.path.join(base_out_dir, "base64")
-            all_v2_str = "\n".join(all_final_configs)
-            with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(all_v2_str)
-            with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode(all_v2_str.encode("utf-8")).decode("utf-8"))
-            lines_per_file = SETTINGS.get("lines_per_file", 200)
-            save_split_files(all_final_configs, os.path.join(v2ray_dir, "subs"), lines_per_file)
-            save_split_files(all_final_configs, os.path.join(base64_dir, "subs"), lines_per_file, is_base64=True)
-            super_limit = SETTINGS.get("supersub_configs_limit", 200)
-            super_configs = all_final_configs[:super_limit]
-            super_configs_str = "\n".join(super_configs)
-            with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f: f.write(super_configs_str)
-            filtered_dir = os.path.join(base_out_dir, "filtered", "subs")
-            protocol_groups = {}
-            for config_link in all_final_configs:
-                try:
-                    protocol = config_link.split("://")[0]
-                    if protocol not in protocol_groups: protocol_groups[protocol] = []
-                    protocol_groups[protocol].append(config_link)
-                except IndexError: continue
-            for protocol, configs in protocol_groups.items():
-                if configs:
-                    protocol_str = "\n".join(configs)
-                    with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f: f.write(protocol_str)
-                    print(f"✅ فایل اشتراک برای پروتکل '{protocol}' با {len(configs)} کانفیگ ساخته شد.")
+
+    if not final_results:
+        print("هیچ کانفیگی در تست عمیق سالم نبود.")
+    else:
+        # نوشتن فایل‌های خروجی بر اساس نتایج دقیق
+        all_final_configs = [res['config'] for res in final_results]
+        v2ray_dir = os.path.join(base_out_dir, "v2ray")
+        base64_dir = os.path.join(base_out_dir, "base64")
+        all_v2_str = "\n".join(all_final_configs)
+        with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(all_v2_str)
+        with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode(all_v2_str.encode("utf-8")).decode("utf-8"))
+        lines_per_file = SETTINGS.get("lines_per_file", 200)
+        save_split_files(all_final_configs, os.path.join(v2ray_dir, "subs"), lines_per_file)
+        save_split_files(all_final_configs, os.path.join(base64_dir, "subs"), lines_per_file, is_base64=True)
+        super_limit = SETTINGS.get("supersub_configs_limit", 200)
+        super_configs = all_final_configs[:super_limit]
+        super_configs_str = "\n".join(super_configs)
+        with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f: f.write(super_configs_str)
+        filtered_dir = os.path.join(base_out_dir, "filtered", "subs")
+        protocol_groups = {}
+        for config_link in all_final_configs:
+            try:
+                protocol = config_link.split("://")[0]
+                if protocol not in protocol_groups: protocol_groups[protocol] = []
+                protocol_groups[protocol].append(config_link)
+            except IndexError: continue
+        for protocol, configs in protocol_groups.items():
+            if configs:
+                protocol_str = "\n".join(configs)
+                with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f: f.write(protocol_str)
+                print(f"✅ فایل اشتراک برای پروتکل '{protocol}' با {len(configs)} کانفیگ ساخته شد.")
 
     if warp_configs:
         warp_str = "\n".join(warp_configs)
