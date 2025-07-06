@@ -5,7 +5,7 @@
 <p>
 <img src="https://www.google.com/search?q=https://img.shields.io/badge/Updated-{{UPDATE_TIME}}-blue?style=for-the-badge&logo=github" alt="آخرین آپدیت">
 <img src="https://www.google.com/search?q=https://img.shields.io/badge/Configs-{{TOTAL_CONFIGS}}-green?style=for-the-badge&logo=serverless" alt="تعداد کانفیگ‌ها">
-<img src="https://www.google.com/search?q=https://img.shields.io/github/stars/YOUR_USERNAME/YOUR_REPO%3Fstyle%3Dfor-the-badge%26logo%3Dgithub%26label%3DStars" alt="ستاره‌ها">
+<img src="https://www.google.com/search?q=https://img.shields.io/github/stars/Ganjabady/XC%3Fstyle%3Dfor-the-badge%26logo%3Dgithub%26label%3DStars" alt="ستاره‌ها">
 </p>
 </div>
 
@@ -18,11 +18,11 @@
 
 لینک کامل (پیشنهادی)
 
-https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/subscriptions/v2ray/all_sub.txt
+https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/v2ray/all_sub.txt
 
 لینک Base64
 
-https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/subscriptions/base64/all_sub.txt
+https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/base64/all_sub.txt
 
 🌍 لینک‌های اشتراک بر اساس کشور
 برای دسترسی به سرورهای یک منطقه خاص، از لینک‌های زیر استفاده کنید.
