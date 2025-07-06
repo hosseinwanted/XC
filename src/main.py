@@ -146,43 +146,41 @@ class FastHandshakeTester:
         print("\nفیلتر سریع کامل شد.")
         return passed_configs
 
-def deep_test_with_v2ray_ping(configs):
-    """مرحله دوم: تست عمیق با ابزار v2ray-ping."""
-    print("مرحله ۲ (تست عمیق) شروع شد...")
+def deep_test_with_sing_tools(configs):
+    """مرحله دوم: تست عمیق با ابزار sing-tools."""
+    print("مرحله ۲ (تست عمیق با sing-tools) شروع شد...")
     
-    # نوشتن کانفیگ‌های ورودی در یک فایل موقت
     with open("temp_configs.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(configs))
 
-    # اجرای ابزار تست
     try:
+        # اجرای ابزار تست sing-tools برای تست URL
+        command = ['./sing-tools', 'urltest', '-i', 'temp_configs.txt']
         process = subprocess.run(
-            ['./v2ray-ping', 'temp_configs.txt'],
+            command,
             capture_output=True, text=True, timeout=300 # ۵ دقیقه مهلت برای کل تست
         )
     except FileNotFoundError:
-        print("خطای بحرانی: ابزار تست v2ray-ping پیدا نشد!")
+        print("خطای بحرانی: ابزار تست sing-tools پیدا نشد!")
         return []
     except subprocess.TimeoutExpired:
         print("خطای بحرانی: زمان اجرای ابزار تست به پایان رسید!")
         return []
 
-    # پردازش خروجی
     results = []
     output_lines = process.stdout.strip().split('\n')
     
-    # استفاده از عبارت منظم برای استخراج پینگ
-    ping_regex = re.compile(r"(vmess|vless|trojan|ss|ssr|tuic|hy2)://.*?\s.*?PING:\s(\d+)")
+    # عبارت منظم برای استخراج کانفیگ و پینگ از خروجی
+    result_regex = re.compile(r"^(.*?://.*?)\s*\|\s*延迟:\s*(\d+)")
     
     for line in output_lines:
-        match = ping_regex.search(line)
+        match = result_regex.search(line)
         if match:
-            config_link = match.group(0).split(" (")[0] # استخراج خود کانفیگ
+            config_link = match.group(1).strip()
             ping_ms = int(match.group(2))
             results.append({'config': config_link, 'ping': ping_ms})
 
     print(f"تست عمیق کامل شد. {len(results)} کانفیگ سالم تایید شد.")
-    # مرتب‌سازی نهایی بر اساس پینگ
     return sorted(results, key=lambda x: x['ping'])
 
 # --- بخش اصلی و اجرای برنامه ---
@@ -213,7 +211,7 @@ def main():
         print("هیچ کانفیگی از فیلتر سریع عبور نکرد. خروج از برنامه.")
         return
 
-    final_results = deep_test_with_v2ray_ping(passed_fast_test)
+    final_results = deep_test_with_sing_tools(passed_fast_test)
     
     if not final_results:
         print("هیچ کانفیگی در تست عمیق سالم نبود. خروج از برنامه.")
@@ -222,8 +220,6 @@ def main():
     # ۴. نوشتن فایل‌های خروجی
     all_final_configs = [res['config'] for res in final_results]
     
-    # ... (بقیه کد برای ذخیره فایل‌ها مشابه قبل است) ...
-    # این بخش برای خوانایی خلاصه شده، اما در کد کامل وجود دارد
     # ذخیره فایل‌های all, super, split و protocol-based
     v2ray_dir = os.path.join(base_out_dir, "v2ray")
     base64_dir = os.path.join(base_out_dir, "base64")
