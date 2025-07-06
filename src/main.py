@@ -151,13 +151,13 @@ def main():
                 ip = socket.gethostbyname(res['host'])
                 country, flag = get_country_and_flag(ip, geo_reader)
             except socket.gaierror:
-                country, flag = "Unknown", "🌐"
+                country, flag = "Unk.", "🌐"
 
             # --- بخش جدید: انتخاب تصادفی برند و اموجی ---
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
             
-            new_name = f"{selected_brand} #{i:03d} | {selected_emoji} {flag} {country}"
+            new_name = f"{flag} {country} #{i:03d} |{selected_brand} {selected_emoji}"
             
             original_link = res['config'].split('#')[0]
             named_config = f"{original_link}#{quote(new_name)}"
