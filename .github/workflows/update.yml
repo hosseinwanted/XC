@@ -2,8 +2,8 @@ name: Update V2Ray Subscriptions
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+    - cron: '0 * * * *' # اجرا هر 1 ساعت
+  workflow_dispatch: # امکان اجرای دستی
 
 jobs:
   update-configs:
@@ -20,15 +20,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      # مرحله جدید: دانلود و آماده‌سازی ابزار تست تخصصی
-      - name: Download and Setup V2Ray-Ping
+      # مرحله جدید: دانلود و آماده‌سازی ابزار تست sing-tools
+      - name: Download and Setup sing-tools
         run: |
           # دانلود آخرین نسخه ابزار از گیت‌هاب
-          wget https://github.com/hossinasaadi/v2ray-ping/releases/latest/download/v2ray-ping_linux_amd64.zip
-          # از حالت فشرده خارج کردن
-          unzip v2ray-ping_linux_amd64.zip
-          # دادن دسترسی اجرایی به فایل
-          chmod +x v2ray-ping
+          wget https://github.com/Kdwkakcs/sing-tools/releases/download/v0.2.1/sing-tools_0.2.1_linux_amd64.tar.gz
+          # استخراج فایل
+          tar -xvf sing-tools_0.2.1_linux_amd64.tar.gz
+          # دادن دسترسی اجرایی
+          chmod +x sing-tools
 
       - name: Install dependencies
         run: |
@@ -36,7 +36,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run the update script
-        # اجرای اسکریپت پایتون که حالا از ابزار تست استفاده می‌کند
         run: python src/main.py
 
       - name: Set current date
