@@ -22,12 +22,6 @@ jobs:
 
       - name: Download and Setup Tools
         run: |
-          echo "Downloading V2Ray-Core..."
-          wget -q https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
-          unzip -q v2ray-linux-64.zip -d v2ray_core
-          chmod +x v2ray_core/v2ray
-          echo "V2Ray is ready."
-
           echo "Downloading GeoIP Database..."
           wget -q https://git.io/GeoLite2-Country.mmdb -O GeoLite2-Country.mmdb
           echo "GeoIP DB is ready."
@@ -37,18 +31,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run the update script
+      - name: Run the main script to test and categorize configs
         run: python src/main.py
+
+      # مرحله جدید: ساخت README.md نهایی
+      - name: Generate README.md from template
+        run: python src/generate_readme.py
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          # اضافه کردن تمام فایل‌های جدید در پوشه subscriptions
-          git add subscriptions/
-          # فقط در صورتی کامیت کن که تغییری وجود داشته باشد
+          # اضافه کردن تمام فایل‌های جدید
+          git add subscriptions/ reports/ README.md
           if ! git diff --staged --quiet; then
-            git commit -m "✅ Update Subscriptions | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
+            git commit -m "✅ Update Subscriptions & Stats | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
             git push
           else
             echo "No changes to commit."
