@@ -5,6 +5,10 @@ import requests
 import socket
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse
+from collections import defaultdict
+from pathlib import Path
+import geoip2.database
 
 # --- بخش تنظیمات ---
 
@@ -18,6 +22,7 @@ def load_settings():
         exit()
 
 SETTINGS = load_settings()
+GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
 
 def setup_directories():
     """پوشه‌های مورد نیاز را ایجاد می‌کند."""
@@ -26,6 +31,7 @@ def setup_directories():
         base_dir,
         os.path.join(base_dir, "v2ray"),
         os.path.join(base_dir, "base64"),
+        os.path.join(base_dir, "regions"), # پوشه جدید برای کشورها
     ]
     for d in dirs_to_create:
         os.makedirs(d, exist_ok=True)
@@ -41,12 +47,10 @@ def get_sources():
             response.raise_for_status()
             content = response.text
             try:
-                # تلاش برای دیکود کردن محتوای Base64
                 if len(content) % 4 != 0: content += '=' * (4 - len(content) % 4)
                 decoded_content = base64.b64decode(content).decode('utf-8', errors='ignore')
                 all_configs.update(decoded_content.splitlines())
             except Exception:
-                # اگر دیکود نشد، محتوا را به صورت خام اضافه کن
                 all_configs.update(content.splitlines())
         except requests.RequestException as e:
             print(f"خطا در دریافت منبع {url}: {e}")
@@ -77,14 +81,14 @@ class V2RayPingTester:
                 port = int(host_port_str.rsplit(':', 1)[1])
             else:
                 host = host_port_str
-                port = 443 # پورت پیش‌فرض برای TLS
+                port = 443
             
             start_time = time.time()
             sock = socket.create_connection((host, port), timeout=self.timeout)
             ping_ms = int((time.time() - start_time) * 1000)
             sock.close()
-            return {'config': config, 'ping': ping_ms}
-        except (socket.timeout, ConnectionRefusedError, OSError):
+            return {'config': config, 'ping': ping_ms, 'host': host}
+        except (socket.timeout, ConnectionRefusedError, OSError, socket.gaierror):
             return None
         except Exception:
             return None
@@ -100,26 +104,56 @@ class V2RayPingTester:
                 result = future.result()
                 if result:
                     reachable_configs.append(result)
-                
-                # نمایش پیشرفت
                 print(f"\rتست کانفیگ‌ها: {i+1}/{total} | سالم: {len(reachable_configs)}", end="")
 
         print(f"\nتست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
         return sorted(reachable_configs, key=lambda x: x['ping'])
 
+def get_country(ip_address, geo_reader):
+    """کشور را بر اساس آدرس IP تشخیص می‌دهد."""
+    if not ip_address or not geo_reader:
+        return "Unknown"
+    try:
+        response = geo_reader.country(ip_address)
+        return response.country.iso_code
+    except (geoip2.errors.AddressNotFoundError, ValueError):
+        return "Unknown"
+
 def main():
     start_time = time.time()
     setup_directories()
 
-    all_links = get_sources()
-    unique_configs = sorted(list(set(filter(None, all_links))))
-    
+    unique_configs = get_sources()
     print(f"تعداد {len(unique_configs)} کانفیگ یکتا برای تست آماده شد.")
 
     tester = V2RayPingTester(unique_configs, timeout=SETTINGS.get("timeout", 5))
     final_results = tester.run()
 
     if final_results:
+        # --- بخش جدید: دسته‌بندی بر اساس کشور ---
+        geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
+        by_country = defaultdict(list)
+        
+        print("شروع دسته‌بندی بر اساس کشور...")
+        for res in final_results:
+            try:
+                # اگر هاست یک دامنه بود، آن را به IP تبدیل کن
+                ip = socket.gethostbyname(res['host'])
+                country = get_country(ip, geo_reader)
+                by_country[country].append(res['config'])
+            except socket.gaierror:
+                by_country["Unknown"].append(res['config'])
+        
+        if geo_reader:
+            geo_reader.close()
+        
+        regions_dir = os.path.join(SETTINGS.get("out_dir", "subscriptions"), "regions")
+        for country, configs in by_country.items():
+            with open(os.path.join(regions_dir, f"{country}.txt"), "w", encoding="utf-8") as f:
+                f.write("\n".join(configs))
+        print("✅ دسته‌بندی بر اساس کشور کامل شد.")
+        # --- پایان بخش جدید ---
+
         all_final_links = [res['config'] for res in final_results]
         
         base_dir = SETTINGS.get("out_dir", "subscriptions")
