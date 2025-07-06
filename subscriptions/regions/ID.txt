@@ -1,1 +1,2 @@
-vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&encryption=none&headerType=&type=tcp#%40V2XCore%20%2313633%20%7C%20%F0%9F%9A%80%20%F0%9F%87%AE%F0%9F%87%A9%20ID
+vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&encryption=none&headerType=&type=tcp#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2313750%20%7Ct.me/V2XCore%20%E2%9A%9C%EF%B8%8F
+vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&encryption=none&headerType=&type=tcp#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2313780%20%7Ct.me/V2XCore%20%F0%9F%92%8E
