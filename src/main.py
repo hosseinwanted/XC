@@ -11,19 +11,17 @@ import socket
 from urllib.parse import urlparse, parse_qs, unquote
 from collections import defaultdict
 from pathlib import Path
-import geoip2.database
 
 # --- بخش تنظیمات ---
 V2RAY_CORE_PATH = "v2ray_core/v2ray"
 TEMP_CONFIG_DIR = "temp_configs"
-REPORTS_DIR = "reports"
 MAX_THREADS = 150
 START_PORT = 10800
-TEST_TIMEOUT = 8
+TEST_TIMEOUT = 10
 TEST_URL = "http://www.gstatic.com/generate_204"
-GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
 
 def load_settings():
+    """فایل تنظیمات را بارگذاری می‌کند."""
     try:
         with open("settings.json", "r", encoding="utf-8") as f:
             return json.load(f)
@@ -34,18 +32,19 @@ def load_settings():
 SETTINGS = load_settings()
 
 def setup_directories():
+    """پوشه‌های مورد نیاز را ایجاد می‌کند."""
+    os.makedirs(TEMP_CONFIG_DIR, exist_ok=True)
     base_dir = SETTINGS.get("out_dir", "subscriptions")
-    dirs = [
-        TEMP_CONFIG_DIR, REPORTS_DIR, base_dir,
-        os.path.join(base_dir, "v2ray", "subs"),
-        os.path.join(base_dir, "base64", "subs"),
-        os.path.join(base_dir, "filtered", "subs"),
-        os.path.join(base_dir, "regions")
+    dirs_to_create = [
+        base_dir,
+        os.path.join(base_dir, "v2ray"),
+        os.path.join(base_dir, "base64"),
     ]
-    for d in dirs:
+    for d in dirs_to_create:
         os.makedirs(d, exist_ok=True)
 
 def get_sources():
+    """کانفیگ‌ها را از منابع دریافت می‌کند."""
     all_configs = set()
     sources = SETTINGS.get("sources", {}).get("files", [])
     for source_path in sources:
@@ -66,6 +65,7 @@ def get_sources():
     return list(filter(None, all_configs))
 
 def parse_link(link):
+    """تجزیه هوشمند انواع لینک‌ها."""
     link = link.strip()
     if link.startswith("vmess://"):
         return parse_vmess(link)
@@ -86,10 +86,11 @@ def parse_vmess(link):
 def parse_vless(link):
     try:
         parsed = urlparse(link)
+        params = parse_qs(parsed.query)
         data = {
             'add': parsed.hostname, 'port': parsed.port, 'id': parsed.username,
             'ps': unquote(parsed.fragment) if parsed.fragment else f"vless-{parsed.hostname}",
-            'params': parse_qs(parsed.query)
+            'params': params
         }
         return {'type': 'vless', 'data': data, 'original_link': link}
     except Exception: return None
@@ -97,10 +98,11 @@ def parse_vless(link):
 def parse_trojan(link):
     try:
         parsed = urlparse(link)
+        params = parse_qs(parsed.query)
         data = {
             'add': parsed.hostname, 'port': parsed.port, 'password': unquote(parsed.username),
             'ps': unquote(parsed.fragment) if parsed.fragment else f"trojan-{parsed.hostname}",
-            'params': parse_qs(parsed.query)
+            'params': params
         }
         return {'type': 'trojan', 'data': data, 'original_link': link}
     except Exception: return None
@@ -122,7 +124,8 @@ class V2RayTester:
             "outbounds": [{"protocol": protocol, "settings": {}, "streamSettings": {}}]
         }
 
-        outbound, outbound_settings, stream_settings = config['outbounds'][0], config['outbounds'][0]['settings'], config['outbounds'][0]['streamSettings']
+        outbound_settings = config['outbounds'][0]['settings']
+        stream_settings = config['outbounds'][0]['streamSettings']
 
         if protocol == 'vmess':
             outbound_settings['vnext'] = [{'address': data.get('add'), 'port': int(data.get('port', 0)), 'users': [{'id': data.get('id'), 'alterId': int(data.get('aid', 0)), 'security': data.get('scy', 'auto')}]}]
@@ -148,14 +151,11 @@ class V2RayTester:
 
     def run_test(self):
         if not self.build_config(): return None, -1
-        cmd = [str(V2RAY_CORE_PATH), "run", "-c", self.config_path]
+        cmd = [V2RAY_CORE_PATH, "run", "-c", self.config_path]
         try:
-            self.proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, errors='ignore')
+            self.proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             time.sleep(2.5)
-            if self.proc.poll() is not None:
-                # stderr_output = self.proc.stderr.read()
-                # print(f"V2Ray process for port {self.port} failed on start. Stderr: {stderr_output[:200]}")
-                return None, -1
+            if self.proc.poll() is not None: return None, -1
             proxies = {'http': f'socks5://127.0.0.1:{self.port}', 'https': f'socks5://127.0.0.1:{self.port}'}
             start_req_time = time.time()
             response = requests.get(TEST_URL, proxies=proxies, timeout=TEST_TIMEOUT)
