@@ -2,7 +2,7 @@ name: Update V2Ray Subscriptions
 
 on:
   schedule:
-    - cron: '0 */4 * * *' # هر 4 ساعت یک بار
+    - cron: '0 */4 * * *' # هر 4 ساعت
   workflow_dispatch:
 
 jobs:
@@ -20,8 +20,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # دانلود و آماده‌سازی V2Ray Core
-      - name: Download and Setup V2Ray
+      - name: Download and Setup Tools
         run: |
           echo "Downloading V2Ray-Core..."
           wget -q https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
@@ -29,16 +28,27 @@ jobs:
           chmod +x v2ray_core/v2ray
           echo "V2Ray is ready."
 
+          echo "Downloading GeoIP Database..."
+          wget -q https://git.io/GeoLite2-Country.mmdb -O GeoLite2-Country.mmdb
+          echo "GeoIP DB is ready."
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run the update script
         run: python src/main.py
 
       - name: Commit and push changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: 'subscriptions/*'
-          author_name: "GitHub Actions"
-          author_email: "actions@github.com"
-          message: "✅ Update Subscriptions | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add subscriptions/ reports/
+          # فقط در صورتی کامیت کن که تغییری وجود داشته باشد
+          if ! git diff --staged --quiet; then
+            git commit -m "✅ Update Subscriptions | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
+            git push
+          else
+            echo "No changes to commit."
+          fi
