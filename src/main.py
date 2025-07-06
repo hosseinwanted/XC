@@ -7,6 +7,7 @@ import subprocess
 import threading
 import queue
 import time
+import socket
 from urllib.parse import urlparse, parse_qs, unquote
 from collections import defaultdict
 from pathlib import Path
@@ -46,10 +47,9 @@ def get_sources():
     for source_path in sources:
         url = f"https://raw.githubusercontent.com/{source_path}"
         try:
-            response = requests.get(url, timeout=20)
+            response = requests.get(url, timeout=30)
             response.raise_for_status()
             content = response.text
-            # دیکود کردن محتوای Base64 در صورت نیاز
             try:
                 if len(content) % 4 != 0:
                     content += '=' * (4 - len(content) % 4)
@@ -62,29 +62,52 @@ def get_sources():
     
     return list(filter(None, all_configs))
 
-def parse_config(link):
+def parse_link(link):
     """لینک کانفیگ را به یک دیکشنری ساختاریافته تبدیل می‌کند."""
     link = link.strip()
     if link.startswith("vmess://"):
-        try:
-            decoded_part = base64.b64decode(link.replace("vmess://", "")).decode('utf-8')
-            data = json.loads(decoded_part)
-            return {'type': 'vmess', 'data': data, 'original_link': link}
-        except Exception:
-            return None
-    elif link.startswith("vless://") or link.startswith("trojan://"):
-        try:
-            parsed_url = urlparse(link)
-            protocol = parsed_url.scheme
-            host = parsed_url.hostname
-            port = parsed_url.port
-            uuid_or_password = unquote(parsed_url.username)
-            if not all([protocol, host, port, uuid_or_password]):
-                return None
-            return {'type': protocol, 'data': {'add': host, 'port': port, 'id': uuid_or_password, 'ps': unquote(parsed_url.fragment)}, 'original_link': link}
-        except Exception:
-            return None
+        return parse_vmess(link)
+    elif link.startswith("vless://"):
+        return parse_vless(link)
+    elif link.startswith("trojan://"):
+        return parse_trojan(link)
     return None
+
+def parse_vmess(link):
+    try:
+        decoded_part = base64.b64decode(link.replace("vmess://", "")).decode('utf-8')
+        data = json.loads(decoded_part)
+        return {'type': 'vmess', 'data': data, 'original_link': link}
+    except Exception:
+        return None
+
+def parse_vless(link):
+    try:
+        parsed_url = urlparse(link)
+        data = {
+            'add': parsed_url.hostname,
+            'port': parsed_url.port,
+            'id': parsed_url.username,
+            'ps': unquote(parsed_url.fragment) if parsed_url.fragment else f"vless-{parsed_url.hostname}",
+            'params': parse_qs(parsed_url.query)
+        }
+        return {'type': 'vless', 'data': data, 'original_link': link}
+    except Exception:
+        return None
+
+def parse_trojan(link):
+    try:
+        parsed_url = urlparse(link)
+        data = {
+            'add': parsed_url.hostname,
+            'port': parsed_url.port,
+            'password': unquote(parsed_url.username),
+            'ps': unquote(parsed_url.fragment) if parsed_url.fragment else f"trojan-{parsed_url.hostname}",
+            'params': parse_qs(parsed_url.query)
+        }
+        return {'type': 'trojan', 'data': data, 'original_link': link}
+    except Exception:
+        return None
 
 class V2RayTester:
     """یک کانفیگ را با استفاده از هسته V2Ray تست می‌کند."""
@@ -92,44 +115,69 @@ class V2RayTester:
         self.config_info = config_info
         self.port = port
         self.proc = None
+        self.config_path = f"temp_config_{self.port}.json"
 
     def generate_config_file(self):
-        """فایل کانفیگ JSON را برای v2ray-core می‌سازد."""
         protocol = self.config_info['type']
         data = self.config_info['data']
         
         config = {
-            "inbounds": [{"port": self.port, "protocol": "socks", "listen": "127.0.0.1"}],
-            "outbounds": [{"protocol": protocol, "settings": {}}]
+            "log": {"loglevel": "warning"},
+            "inbounds": [{"port": self.port, "protocol": "socks", "listen": "127.0.0.1", "settings": {"udp": True}}],
+            "outbounds": [{"protocol": protocol, "settings": {}, "streamSettings": {}}]
         }
 
-        if protocol == 'vmess':
-            config['outbounds'][0]['settings']['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id'], 'alterId': data.get('aid', 0)}]}]
-        elif protocol == 'vless':
-            config['outbounds'][0]['settings']['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id']}]}]
-        elif protocol == 'trojan':
-            config['outbounds'][0]['settings']['servers'] = [{'address': data['add'], 'port': int(data['port']), 'password': data['id']}]
+        outbound_settings = config['outbounds'][0]['settings']
+        stream_settings = config['outbounds'][0]['streamSettings']
 
-        # نوشتن کانفیگ در یک فایل موقت
-        self.config_path = f"temp_config_{self.port}.json"
+        if protocol == 'vmess':
+            outbound_settings['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id'], 'alterId': int(data.get('aid', 0)), 'security': data.get('scy', 'auto')}]}]
+            stream_settings['network'] = data.get('net', 'tcp')
+            stream_settings['security'] = data.get('tls', 'none')
+            if data.get('net') == 'ws':
+                stream_settings['wsSettings'] = {'path': data.get('path', '/'), 'headers': {'Host': data.get('host', data['add'])}}
+            if data.get('tls') == 'tls':
+                stream_settings['tlsSettings'] = {'serverName': data.get('sni', data.get('host', data['add']))}
+        
+        elif protocol == 'vless':
+            params = data.get('params', {})
+            outbound_settings['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id'], 'flow': params.get('flow', [''])[0]}]}]
+            stream_settings['network'] = params.get('type', ['tcp'])[0]
+            stream_settings['security'] = params.get('security', ['none'])[0]
+            if stream_settings['network'] == 'ws':
+                stream_settings['wsSettings'] = {'path': params.get('path', ['/'])[0], 'headers': {'Host': params.get('host', [data['add']])[0]}}
+            if stream_settings['security'] == 'tls':
+                stream_settings['tlsSettings'] = {'serverName': params.get('sni', [data['add']])[0]}
+            elif stream_settings['security'] == 'reality':
+                stream_settings['realitySettings'] = {'publicKey': params.get('pbk', [''])[0], 'shortId': params.get('sid', [''])[0], 'serverName': params.get('sni', [data['add']])[0]}
+
+        elif protocol == 'trojan':
+            params = data.get('params', {})
+            outbound_settings['servers'] = [{'address': data['add'], 'port': int(data['port']), 'password': data['password']}]
+            stream_settings['security'] = params.get('security', ['tls'])[0]
+            if stream_settings['security'] == 'tls':
+                 stream_settings['tlsSettings'] = {'serverName': params.get('sni', [data['add']])[0]}
+
         with open(self.config_path, 'w') as f:
-            json.dump(config, f)
+            json.dump(config, f, indent=2)
 
     def run_test(self):
-        """پروسه V2Ray را اجرا کرده و تست اتصال را انجام می‌دهد."""
-        self.generate_config_file()
-        cmd = [str(V2RAY_CORE_PATH), "run", "-c", self.config_path]
-        
-        start_time = time.time()
         try:
-            self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            time.sleep(2) # زمان برای شروع به کار V2Ray
+            self.generate_config_file()
+            cmd = [str(V2RAY_CORE_PATH), "run", "-c", self.config_path]
             
+            self.proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(2.5) # زمان برای شروع به کار V2Ray
+
+            if self.proc.poll() is not None:
+                return None, -1 # پروسه بلافاصله بسته شده، کانفیگ مشکل دارد
+
             proxies = {'http': f'socks5://127.0.0.1:{self.port}', 'https': f'socks5://127.0.0.1:{self.port}'}
+            start_req_time = time.time()
             response = requests.get("http://www.gstatic.com/generate_204", proxies=proxies, timeout=SETTINGS.get("timeout", 5))
             
             if response.status_code == 204:
-                latency = int((time.time() - start_time) * 1000)
+                latency = int((time.time() - start_req_time) * 1000)
                 return self.config_info['original_link'], latency
         except Exception:
             return None, -1
@@ -169,13 +217,11 @@ def main():
     start_time = time.time()
     setup_directories()
 
-    # ۱. جمع‌آوری کانفیگ‌ها
     all_links = get_sources()
-    parsed_configs = [parse_config(link) for link in all_links]
+    parsed_configs = [parse_link(link) for link in all_links]
     valid_configs = list(filter(None, parsed_configs))
     print(f"تعداد {len(valid_configs)} کانفیگ معتبر برای تست آماده شد.")
 
-    # ۲. تست کانفیگ‌ها به صورت موازی
     config_q = queue.Queue()
     for config in valid_configs:
         config_q.put(config)
@@ -193,7 +239,6 @@ def main():
     for thread in threads:
         thread.join()
 
-    # ۳. جمع‌آوری نتایج
     final_results = []
     while not result_q.empty():
         final_results.append(result_q.get())
@@ -201,15 +246,15 @@ def main():
     final_results.sort(key=lambda x: x['ping'])
     print(f"تست کامل شد. {len(final_results)} کانفیگ سالم پیدا شد.")
 
-    # ۴. دسته‌بندی و ذخیره‌سازی
+    if not final_results:
+        print("هیچ کانفیگ سالمی پیدا نشد. خروج از برنامه.")
+        return
+
     all_final_links = [res['config'] for res in final_results]
     
     # ذخیره فایل‌های اصلی
-    with open(os.path.join(MERGED_DIR, "all_sub.txt"), "w") as f:
-        f.write("\n".join(all_final_links))
-    
-    with open(os.path.join(BASE64_DIR, "all_sub.txt"), "w") as f:
-        f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
+    with open(os.path.join(MERGED_DIR, "all_sub.txt"), "w", encoding="utf-8") as f: f.write("\n".join(all_final_links))
+    with open(os.path.join(BASE64_DIR, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
     
     # دسته‌بندی بر اساس پروتکل
     by_protocol = defaultdict(list)
@@ -218,8 +263,7 @@ def main():
         by_protocol[proto].append(res['config'])
     
     for proto, configs in by_protocol.items():
-        with open(os.path.join(PROTOCOLS_DIR, f"{proto}.txt"), "w") as f:
-            f.write("\n".join(configs))
+        with open(os.path.join(PROTOCOLS_DIR, f"{proto}.txt"), "w", encoding="utf-8") as f: f.write("\n".join(configs))
         print(f"✅ فایل اشتراک برای پروتکل '{proto}' با {len(configs)} کانفیگ ساخته شد.")
 
     # دسته‌بندی بر اساس کشور
@@ -228,6 +272,7 @@ def main():
     for res in final_results:
         try:
             host = urlparse(res['config']).hostname
+            # Resolve domain to IP for GeoIP lookup
             ip = socket.gethostbyname(host)
             country = get_country(ip, geo_reader)
             by_country[country].append(res['config'])
