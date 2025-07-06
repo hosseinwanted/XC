@@ -20,7 +20,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      # مرحله جدید: دانلود ابزارهای مورد نیاز
       - name: Download and Setup Tools
         run: |
           echo "Downloading V2Ray-Core..."
@@ -49,7 +48,7 @@ jobs:
           git add subscriptions/
           # فقط در صورتی کامیت کن که تغییری وجود داشته باشد
           if ! git diff --staged --quiet; then
-            git commit -m "✅ Update Subscriptions & GeoIP | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
+            git commit -m "✅ Update Subscriptions | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
             git push
           else
             echo "No changes to commit."
