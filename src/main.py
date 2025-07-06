@@ -5,6 +5,8 @@ import requests
 import socket
 import ssl
 import time
+import re
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- بخش تنظیمات و بارگذاری اولیه ---
@@ -93,11 +95,12 @@ def decode_base64_configs(configs):
 
 # --- بخش تست و ارزیابی کانفیگ‌ها ---
 
-class V2RayPingTester:
-    def __init__(self, configs, timeout=5):
+class FastHandshakeTester:
+    """مرحله اول: تست سریع برای حذف سرورهای مرده."""
+    def __init__(self, configs, timeout=3):
         self.configs = configs
         self.timeout = timeout
-        self.max_threads = 200
+        self.max_threads = 400
 
     def parse_config(self, config_link):
         try:
@@ -105,8 +108,7 @@ class V2RayPingTester:
             protocol = config_link.split("://")[0]
             if protocol not in SETTINGS.get("protocols", []): return None
             uri_part = config_link.split('://')[1]
-            main_part = uri_part.split('#')[0]
-            host_part = main_part.split('?')[0]
+            host_part = uri_part.split('#')[0].split('?')[0]
             if '@' in host_part: host_port_str = host_part.split('@')[1]
             else: host_port_str = host_part
             if ':' in host_port_str:
@@ -115,124 +117,142 @@ class V2RayPingTester:
             else:
                 host = host_port_str
                 port = 443
-            use_tls = 'security=tls' in main_part.lower() or port == 443
-            return host, port, use_tls
+            return host, port
         except Exception:
             return None
 
     def test_single(self, config):
+        """تست اتصال TCP ساده."""
         parsed_data = self.parse_config(config)
-        if not parsed_data or not parsed_data[0]: return None
-        host, port, use_tls = parsed_data
+        if not parsed_data: return None
+        host, port = parsed_data
         try:
-            start_time = time.time()
             sock = socket.create_connection((host, port), timeout=self.timeout)
-            if use_tls:
-                context = ssl.create_default_context()
-                sock = context.wrap_socket(sock, server_hostname=host)
             sock.close()
-            ping_ms = int((time.time() - start_time) * 1000)
-            return {'config': config, 'ping': ping_ms}
+            return config
         except Exception:
             return None
 
-    def test_all(self):
-        reachable_configs = []
+    def run(self):
+        """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
+        passed_configs = []
         with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
             for i, future in enumerate(as_completed(future_to_config)):
                 result = future.result()
                 if result:
-                    reachable_configs.append(result)
-                print(f"\rتست کانفیگ‌ها: {i+1}/{len(self.configs)}", end="")
-        print("\nتست کامل شد.")
-        return sorted(reachable_configs, key=lambda x: x['ping'])
+                    passed_configs.append(result)
+                print(f"\rمرحله ۱ (فیلتر سریع): {i+1}/{len(self.configs)}", end="")
+        print("\nفیلتر سریع کامل شد.")
+        return passed_configs
+
+def deep_test_with_v2ray_ping(configs):
+    """مرحله دوم: تست عمیق با ابزار v2ray-ping."""
+    print("مرحله ۲ (تست عمیق) شروع شد...")
+    
+    # نوشتن کانفیگ‌های ورودی در یک فایل موقت
+    with open("temp_configs.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(configs))
+
+    # اجرای ابزار تست
+    try:
+        process = subprocess.run(
+            ['./v2ray-ping', 'temp_configs.txt'],
+            capture_output=True, text=True, timeout=300 # ۵ دقیقه مهلت برای کل تست
+        )
+    except FileNotFoundError:
+        print("خطای بحرانی: ابزار تست v2ray-ping پیدا نشد!")
+        return []
+    except subprocess.TimeoutExpired:
+        print("خطای بحرانی: زمان اجرای ابزار تست به پایان رسید!")
+        return []
+
+    # پردازش خروجی
+    results = []
+    output_lines = process.stdout.strip().split('\n')
+    
+    # استفاده از عبارت منظم برای استخراج پینگ
+    ping_regex = re.compile(r"(vmess|vless|trojan|ss|ssr|tuic|hy2)://.*?\s.*?PING:\s(\d+)")
+    
+    for line in output_lines:
+        match = ping_regex.search(line)
+        if match:
+            config_link = match.group(0).split(" (")[0] # استخراج خود کانفیگ
+            ping_ms = int(match.group(2))
+            results.append({'config': config_link, 'ping': ping_ms})
+
+    print(f"تست عمیق کامل شد. {len(results)} کانفیگ سالم تایید شد.")
+    # مرتب‌سازی نهایی بر اساس پینگ
+    return sorted(results, key=lambda x: x['ping'])
 
 # --- بخش اصلی و اجرای برنامه ---
 
 def main():
     start_time = time.time()
-    
-    # ۱. ایجاد پوشه‌های خروجی
     base_out_dir = create_output_dirs()
     
-    # ۲. دریافت و پاک‌سازی کانفیگ‌ها
+    # ۱. دریافت و پاک‌سازی
     raw_configs = get_all_sources_content()
     decoded_configs = decode_base64_configs(raw_configs)
-    
     unique_configs = sorted(list(set(filter(None, decoded_configs))))
     
-    # ۳. تفکیک کانفیگ‌های Warp
+    # ۲. تفکیک کانفیگ‌های Warp
     warp_configs = [c for c in unique_configs if c.startswith("warp://")]
     v2ray_configs = [c for c in unique_configs if not c.startswith("warp://")]
     
-    valid_protocol_configs = [c for c in v2ray_configs if any(p in c for p in SETTINGS.get("protocols", []))]
+    limit = SETTINGS.get("all_configs_limit", 4000)
+    configs_to_fast_test = v2ray_configs[:limit]
     
-    limit = SETTINGS.get("all_configs_limit", 3000)
-    configs_to_test = valid_protocol_configs[:limit]
-    
-    print(f"تعداد {len(configs_to_test)} کانفیگ V2Ray و {len(warp_configs)} کانفیگ Warp برای پردازش آماده شد.")
+    print(f"تعداد {len(configs_to_fast_test)} کانفیگ برای فیلتر سریع آماده شد.")
 
-    # ۴. تست کانفیگ‌های V2Ray
-    tester = V2RayPingTester(configs_to_test, timeout=SETTINGS.get("timeout", 5))
-    reachable_results = tester.test_all()
+    # ۳. اجرای تست دو مرحله‌ای
+    fast_tester = FastHandshakeTester(configs_to_fast_test)
+    passed_fast_test = fast_tester.run()
     
-    print(f"تعداد {len(reachable_results)} کانفیگ سالم پیدا شد.")
+    if not passed_fast_test:
+        print("هیچ کانفیگی از فیلتر سریع عبور نکرد. خروج از برنامه.")
+        return
 
-    # ۵. نوشتن فایل‌های خروجی
+    final_results = deep_test_with_v2ray_ping(passed_fast_test)
     
-    # --- پردازش و ذخیره کانفیگ‌های V2Ray ---
+    if not final_results:
+        print("هیچ کانفیگی در تست عمیق سالم نبود. خروج از برنامه.")
+        return
+
+    # ۴. نوشتن فایل‌های خروجی
+    all_final_configs = [res['config'] for res in final_results]
+    
+    # ... (بقیه کد برای ذخیره فایل‌ها مشابه قبل است) ...
+    # این بخش برای خوانایی خلاصه شده، اما در کد کامل وجود دارد
+    # ذخیره فایل‌های all, super, split و protocol-based
     v2ray_dir = os.path.join(base_out_dir, "v2ray")
     base64_dir = os.path.join(base_out_dir, "base64")
-    
-    all_v2_configs = [res['config'] for res in reachable_results]
-    all_v2_str = "\n".join(all_v2_configs)
-    
-    # ذخیره در v2ray/all_sub.txt
-    with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
-        f.write(all_v2_str)
-    # ذخیره نسخه Base64
-    with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
-        f.write(base64.b64encode(all_v2_str.encode("utf-8")).decode("utf-8"))
-
-    # ذخیره فایل‌های تکه‌تکه شده
+    all_v2_str = "\n".join(all_final_configs)
+    with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(all_v2_str)
+    with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode(all_v2_str.encode("utf-8")).decode("utf-8"))
     lines_per_file = SETTINGS.get("lines_per_file", 200)
-    save_split_files(all_v2_configs, os.path.join(v2ray_dir, "subs"), lines_per_file, is_base64=False)
-    save_split_files(all_v2_configs, os.path.join(base64_dir, "subs"), lines_per_file, is_base64=True)
-    
-    # ذخیره super-sub
+    save_split_files(all_final_configs, os.path.join(v2ray_dir, "subs"), lines_per_file)
+    save_split_files(all_final_configs, os.path.join(base64_dir, "subs"), lines_per_file, is_base64=True)
     super_limit = SETTINGS.get("supersub_configs_limit", 200)
-    super_configs = all_v2_configs[:super_limit]
+    super_configs = all_final_configs[:super_limit]
     super_configs_str = "\n".join(super_configs)
-    with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f:
-        f.write(super_configs_str)
-
-    # --- پردازش و ذخیره کانفیگ‌های Warp ---
+    with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f: f.write(super_configs_str)
     if warp_configs:
         warp_str = "\n".join(warp_configs)
-        with open(os.path.join(base_out_dir, "warp", "all_sub.txt"), "w", encoding="utf-8") as f:
-            f.write(warp_str)
+        with open(os.path.join(base_out_dir, "warp", "all_sub.txt"), "w", encoding="utf-8") as f: f.write(warp_str)
         print(f"✅ فایل اشتراک Warp با {len(warp_configs)} کانفیگ ساخته شد.")
-
-    # --- پردازش و ذخیره بر اساس پروتکل ---
     filtered_dir = os.path.join(base_out_dir, "filtered", "subs")
     protocol_groups = {}
-    for res in reachable_results:
-        config_link = res['config']
+    for config_link in all_final_configs:
         try:
             protocol = config_link.split("://")[0]
-            if protocol not in protocol_groups:
-                protocol_groups[protocol] = []
+            if protocol not in protocol_groups: protocol_groups[protocol] = []
             protocol_groups[protocol].append(config_link)
-        except IndexError:
-            continue
-
+        except IndexError: continue
     for protocol, configs in protocol_groups.items():
         if configs:
             protocol_str = "\n".join(configs)
-            file_path = os.path.join(filtered_dir, f"{protocol}.txt")
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(protocol_str)
+            with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f: f.write(protocol_str)
             print(f"✅ فایل اشتراک برای پروتکل '{protocol}' با {len(configs)} کانفیگ ساخته شد.")
 
     print(f"\nکل فرآیند در {time.time() - start_time:.2f} ثانیه به پایان رسید.")
