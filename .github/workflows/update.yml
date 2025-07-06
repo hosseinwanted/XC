@@ -20,14 +20,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Download and Setup V2Ray
-        run: |
-          echo "Downloading V2Ray-Core..."
-          wget -q https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
-          unzip -q v2ray-linux-64.zip -d v2ray_core
-          chmod +x v2ray_core/v2ray
-          echo "V2Ray is ready."
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -40,8 +32,7 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          # فقط فایل‌هایی را اضافه کن که وجود دارند
-          git add subscriptions/ || echo "No subscriptions folder to add"
+          git add subscriptions/
           # فقط در صورتی کامیت کن که تغییری وجود داشته باشد
           if ! git diff --staged --quiet; then
             git commit -m "✅ Update Subscriptions | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
