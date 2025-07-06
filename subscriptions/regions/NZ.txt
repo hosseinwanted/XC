@@ -1,2 +1,2 @@
-vless://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@114.129.43.29:8880?sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=/TelegramU0001F1E8U0001F1F3&allowInsecure=0#%40V2XCore%20%23049%20%7C%20%E2%9C%A8%20%F0%9F%87%B3%F0%9F%87%BF%20NZ
-ss://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@114.129.43.29:8880?sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=/TelegramU0001F1E8U0001F1F3&allowInsecure=0#%40V2XCore%20%23223%20%7C%20%F0%9F%92%8E%20%F0%9F%87%B3%F0%9F%87%BF%20NZ
+vless://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@114.129.43.29:8880?sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=/TelegramU0001F1E8U0001F1F3&allowInsecure=0#%40V2XCore%20%23105%20%7C%20%E2%9A%9C%EF%B8%8F%20%F0%9F%87%B3%F0%9F%87%BF%20NZ
+ss://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@114.129.43.29:8880?sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=/TelegramU0001F1E8U0001F1F3&allowInsecure=0#t.me/V2XCore%20%23227%20%7C%20%F0%9F%8E%AF%20%F0%9F%87%B3%F0%9F%87%BF%20NZ

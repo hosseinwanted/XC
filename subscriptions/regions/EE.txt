@@ -1,2 +1,2 @@
-ss://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@45.80.110.29:8880?security=none&sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=%2FTelegramU0001F1E8U0001F1F3#%40V2XCore%20%23080%20%7C%20%E2%9C%A8%20%F0%9F%87%AA%F0%9F%87%AA%20EE
-vless://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@45.80.110.29:8880?security=none&sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=%2FTelegramU0001F1E8U0001F1F3#%40V2XCore%20%23244%20%7C%20%F0%9F%8E%AF%20%F0%9F%87%AA%F0%9F%87%AA%20EE
+vless://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@45.80.110.29:8880?security=none&sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=%2FTelegramU0001F1E8U0001F1F3#%40V2XCore%20%23051%20%7C%20%F0%9F%91%91%20%F0%9F%87%AA%F0%9F%87%AA%20EE
+ss://fab7bf9c-ddb9-4563-8a04-fb01ce6c0fbf@45.80.110.29:8880?security=none&sni=hk.laoyoutiao.link&type=ws&host=hk.laoyoutiao.link&path=%2FTelegramU0001F1E8U0001F1F3#%40V2XCore%20%23150%20%7C%20%E2%9A%9C%EF%B8%8F%20%F0%9F%87%AA%F0%9F%87%AA%20EE
