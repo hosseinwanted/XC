@@ -1,103 +1,58 @@
 <div align="center">
+<h1 style="font-size: 2.5em; font-weight: bold;">🚀 V2XCore | مخزن کانفیگ‌های رایگان 🚀</h1>
+<p>✨ مجموعه‌ای از کانفیگ‌های پرسرعت و تست‌شده، همیشه به‌روز ✨</p>
 
-🚀 مخزن کانفیگ‌های V2Ray | V2XCore 🚀
-✨ مجموعه‌ای از کانفیگ‌های پرسرعت و تست‌شده، همیشه به‌روز ✨
 <p>
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Updated-2025-07-06 17:49:11 UTC-blue?style=for-the-badge&logo=github" alt="آخرین آپدیت">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Configs-14040-green?style=for-the-badge&logo=serverless" alt="تعداد کانفیگ‌ها">
-<img src="https://www.google.com/search?q=https://img.shields.io/github/stars/Ganjabady/XC%3Fstyle%3Dfor-the-badge%26logo%3Dgithub%26label%3DStars" alt="ستاره‌ها">
+<img src="https://img.shields.io/badge/Updated-2025-07-06 18:40:48 UTC-blue?style=for-the-badge&logo=github" alt="آخرین آپدیت">
+<img src="https://img.shields.io/badge/Configs-14033-green?style=for-the-badge&logo=serverless" alt="تعداد کانفیگ‌ها">
 </p>
-
 </div>
 
-📋 لینک‌های اشتراک اصلی
+📋 لینک‌های اشتراک اصلی (All-in-One)
+این لینک‌ها شامل تمام کانفیگ‌های سالم و مرتب‌شده بر اساس سرعت هستند.
+
 نوع اشتراک
 
-لینک خام (Raw)
+لینک قابل کپی (برای کلاینت)
+
+لینک کامل (پیشنهادی)
+
+https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/v2ray/all_sub.txt
 
 لینک Base64
 
-All Configs (ترکیبی)
-
-کپی
-
-کپی
+https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/base64/all_sub.txt
 
 🌍 لینک‌های اشتراک بر اساس کشور
-در این بخش، کانفیگ‌ها بر اساس موقعیت جغرافیایی سرور دسته‌بندی شده‌اند.
+برای دسترسی به سرورهای یک منطقه خاص، از لینک‌های زیر استفاده کنید.
 
-| کشور | تعداد | لینک اشتراک |
-| :--- | :---: | :---: |
-| **US** | `2519` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/US.txt) |
-| **NL** | `717` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/NL.txt) |
-| **GB** | `708` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/GB.txt) |
-| **DE** | `521` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/DE.txt) |
-| **RU** | `483` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/RU.txt) |
-| **IR** | `337` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IR.txt) |
-| **JP** | `301` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/JP.txt) |
-| **SG** | `252` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SG.txt) |
-| **LT** | `249` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/LT.txt) |
-| **FR** | `232` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/FR.txt) |
-| **KR** | `131` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/KR.txt) |
-| **KZ** | `121` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/KZ.txt) |
-| **HK** | `121` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/HK.txt) |
-| **CA** | `117` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CA.txt) |
-| **RO** | `107` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/RO.txt) |
-| **CY** | `100` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CY.txt) |
-| **SE** | `76` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SE.txt) |
-| **ES** | `72` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/ES.txt) |
-| **AE** | `69` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AE.txt) |
-| **SI** | `67` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SI.txt) |
-| **EE** | `64` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/EE.txt) |
-| **AM** | `64` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AM.txt) |
-| **AT** | `57` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AT.txt) |
-| **LU** | `57` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/LU.txt) |
-| **SC** | `51` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SC.txt) |
-| **ZA** | `46` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/ZA.txt) |
-| **VN** | `44` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/VN.txt) |
-| **AU** | `43` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AU.txt) |
-| **CH** | `41` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CH.txt) |
-| **TR** | `41` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/TR.txt) |
-| **BR** | `37` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BR.txt) |
-| **FI** | `37` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/FI.txt) |
-| **CN** | `35` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CN.txt) |
-| **BG** | `32` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BG.txt) |
-| **IT** | `27` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IT.txt) |
-| **PH** | `24` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PH.txt) |
-| **IL** | `20` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IL.txt) |
-| **IN** | `19` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IN.txt) |
-| **UA** | `19` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/UA.txt) |
-| **CZ** | `19` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CZ.txt) |
-| **PL** | `17` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PL.txt) |
-| **TW** | `16` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/TW.txt) |
-| **MT** | `14` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MT.txt) |
-| **JO** | `13` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/JO.txt) |
-| **BA** | `11` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BA.txt) |
-| **SA** | `8` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SA.txt) |
-| **NZ** | `8` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/NZ.txt) |
-| **HR** | `8` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/HR.txt) |
-| **BE** | `5` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BE.txt) |
-| **LV** | `5` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/LV.txt) |
-| **PE** | `4` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PE.txt) |
-| **RS** | `4` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/RS.txt) |
-| **DK** | `3` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/DK.txt) |
-| **AL** | `3` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AL.txt) |
-| **VG** | `3` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/VG.txt) |
-| **IE** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IE.txt) |
-| **SK** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SK.txt) |
-| **CL** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CL.txt) |
-| **MD** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MD.txt) |
-| **ID** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/ID.txt) |
-| **TH** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/TH.txt) |
-| **PT** | `2` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PT.txt) |
-| **MU** | `1` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MU.txt) |
-| **CO** | `1` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CO.txt) |
-| **MX** | `1` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MX.txt) |
-| **GE** | `1` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/GE.txt) |
-| **AR** | `1` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AR.txt) |
-| **NP** | `1` | [کپی](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/NP.txt) |
+| کشور | تعداد | لینک | کشور | تعداد | لینک | کشور | تعداد | لینک |
+| :--- | :---: | :---: | :--- | :---: | :---: | :--- | :---: | :---: |
+| [`AT`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AT.txt) | `57` | ✅ | [`NZ`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/NZ.txt) | `8` | ✅ |
+| [`US`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/US.txt) | `2530` | ✅ | [`LU`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/LU.txt) | `57` | ✅ | [`HR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/HR.txt) | `8` | ✅ |
+| [`NL`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/NL.txt) | `717` | ✅ | [`SC`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SC.txt) | `51` | ✅ | [`SA`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SA.txt) | `8` | ✅ |
+| [`GB`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/GB.txt) | `707` | ✅ | [`ZA`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/ZA.txt) | `45` | ✅ | [`BE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BE.txt) | `5` | ✅ |
+| [`DE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/DE.txt) | `512` | ✅ | [`VN`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/VN.txt) | `44` | ✅ | [`LV`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/LV.txt) | `5` | ✅ |
+| [`RU`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/RU.txt) | `483` | ✅ | [`AU`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AU.txt) | `43` | ✅ | [`PE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PE.txt) | `4` | ✅ |
+| [`IR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IR.txt) | `335` | ✅ | [`CH`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CH.txt) | `41` | ✅ | [`RS`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/RS.txt) | `4` | ✅ |
+| [`JP`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/JP.txt) | `301` | ✅ | [`TR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/TR.txt) | `40` | ✅ | [`PT`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PT.txt) | `4` | ✅ |
+| [`SG`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SG.txt) | `252` | ✅ | [`BR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BR.txt) | `37` | ✅ | [`DK`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/DK.txt) | `3` | ✅ |
+| [`LT`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/LT.txt) | `249` | ✅ | [`FI`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/FI.txt) | `37` | ✅ | [`AL`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AL.txt) | `3` | ✅ |
+| [`FR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/FR.txt) | `228` | ✅ | [`CN`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CN.txt) | `35` | ✅ | [`VG`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/VG.txt) | `3` | ✅ |
+| [`KR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/KR.txt) | `128` | ✅ | [`BG`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BG.txt) | `32` | ✅ | [`IE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IE.txt) | `2` | ✅ |
+| [`KZ`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/KZ.txt) | `121` | ✅ | [`IT`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IT.txt) | `27` | ✅ | [`CL`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CL.txt) | `2` | ✅ |
+| [`HK`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/HK.txt) | `121` | ✅ | [`PH`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PH.txt) | `24` | ✅ | [`SK`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SK.txt) | `2` | ✅ |
+| [`CA`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CA.txt) | `117` | ✅ | [`IL`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IL.txt) | `20` | ✅ | [`ID`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/ID.txt) | `2` | ✅ |
+| [`RO`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/RO.txt) | `107` | ✅ | [`UA`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/UA.txt) | `19` | ✅ | [`MD`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MD.txt) | `2` | ✅ |
+| [`CY`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CY.txt) | `100` | ✅ | [`IN`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/IN.txt) | `19` | ✅ | [`TH`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/TH.txt) | `2` | ✅ |
+| [`SE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SE.txt) | `77` | ✅ | [`CZ`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CZ.txt) | `18` | ✅ | [`MU`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MU.txt) | `1` | ✅ |
+| [`ES`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/ES.txt) | `72` | ✅ | [`PL`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/PL.txt) | `17` | ✅ | [`MX`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MX.txt) | `1` | ✅ |
+| [`AE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AE.txt) | `69` | ✅ | [`TW`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/TW.txt) | `15` | ✅ | [`CO`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/CO.txt) | `1` | ✅ |
+| [`SI`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/SI.txt) | `67` | ✅ | [`MT`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/MT.txt) | `14` | ✅ | [`AR`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AR.txt) | `1` | ✅ |
+| [`EE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/EE.txt) | `64` | ✅ | [`JO`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/JO.txt) | `13` | ✅ | [`GE`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/GE.txt) | `1` | ✅ |
+| [`AM`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/AM.txt) | `64` | ✅ | [`BA`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/BA.txt) | `11` | ✅ | [`NP`](https://raw.githubusercontent.com/Ganjabady/XC/main/subscriptions/regions/NP.txt) | `1` | ✅ |
 
 
-🔄 آخرین به‌روزرسانی: 2025-07-06 17:49:11 UTC
+🔄 آخرین به‌روزرسانی: 2025-07-06 18:40:48 UTC
 
-💡 نکته: برای استفاده از لینک‌ها، آن‌ها را در کلاینت خود (مانند V2RayNG یا Nekoray) به عنوان یک اشتراک جدید (Subscription) اضافه کنید.
+💡 نکته: برای استفاده، لینک مورد نظر را کپی کرده و در کلاینت خود (مانند V2RayNG، Nekoray، Streisand و...) به عنوان یک اشتراک جدید (Subscription) اضافه کنید.
