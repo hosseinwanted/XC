@@ -2,197 +2,244 @@ import os
 import json
 import base64
 import requests
-import socket
-import ssl
+import re
+import subprocess
+import threading
+import queue
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse, parse_qs, unquote
+from collections import defaultdict
+from pathlib import Path
+import geoip2.database
 
-# --- بخش تنظیمات و بارگذاری اولیه ---
+# --- بخش تنظیمات کلی ---
+PROTOCOLS_DIR = "subscriptions/filtered/subs"
+REGIONS_DIR = "subscriptions/regions"
+REPORTS_DIR = "reports"
+MERGED_DIR = "subscriptions/v2ray"
+BASE64_DIR = "subscriptions/base64"
+GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
+V2RAY_CORE_PATH = Path("v2ray_core/v2ray")
+
+# --- کلاس‌ها و توابع اصلی ---
 
 def load_settings():
     """فایل تنظیمات را بارگذاری می‌کند."""
     try:
         with open("settings.json", "r", encoding="utf-8") as f:
             return json.load(f)
-    except FileNotFoundError:
-        print("خطا: فایل settings.json پیدا نشد.")
-        exit()
-    except json.JSONDecodeError:
-        print("خطا: فایل settings.json معتبر نیست.")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"خطا در خواندن settings.json: {e}")
         exit()
 
 SETTINGS = load_settings()
 
-# --- بخش ابزارهای کمکی ---
-
-def create_output_dirs():
-    """تمام پوشه‌های خروجی مورد نیاز را ایجاد می‌کند."""
-    base_dir = SETTINGS.get("out_dir", "subscriptions")
-    dirs_to_create = [
-        base_dir,
-        os.path.join(base_dir, "v2ray", "subs"),
-        os.path.join(base_dir, "base64", "subs"),
-        os.path.join(base_dir, "filtered", "subs"),
-        os.path.join(base_dir, "warp")
-    ]
-    for d in dirs_to_create:
+def setup_directories():
+    """پوشه‌های مورد نیاز را ایجاد می‌کند."""
+    for d in [PROTOCOLS_DIR, REGIONS_DIR, REPORTS_DIR, MERGED_DIR, BASE64_DIR, f"{MERGED_DIR}/subs", f"{BASE64_DIR}/subs"]:
         os.makedirs(d, exist_ok=True)
-    return base_dir
 
-def save_split_files(configs, out_path, lines_per_file, is_base64=False):
-    """لیست کانفیگ‌ها را به فایل‌های کوچکتر تقسیم و ذخیره می‌کند."""
-    for i, chunk_start in enumerate(range(0, len(configs), lines_per_file)):
-        chunk = configs[chunk_start:chunk_start + lines_per_file]
-        content = "\n".join(chunk)
-        if is_base64:
-            content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
-        
-        file_name = f"sub{i+1}.txt"
-        with open(os.path.join(out_path, file_name), "w", encoding="utf-8") as f:
-            f.write(content)
-
-# --- بخش جمع‌آوری کانفیگ‌ها ---
-
-def get_all_sources_content():
-    """تمام کانفیگ‌ها را از منابع جمع‌آوری می‌کند."""
-    all_configs = []
-    sources = SETTINGS.get("sources", {})
-    for file_path in sources.get("files", []):
-        url = f"https://raw.githubusercontent.com/{file_path}"
+def get_sources():
+    """کانفیگ‌ها را از منابع تعریف شده در settings.json دریافت می‌کند."""
+    all_configs = set()
+    sources = SETTINGS.get("sources", {}).get("files", [])
+    for source_path in sources:
+        url = f"https://raw.githubusercontent.com/{source_path}"
         try:
-            response = requests.get(url, timeout=15)
+            response = requests.get(url, timeout=20)
             response.raise_for_status()
-            all_configs.extend(response.text.splitlines())
-        except requests.RequestException as e:
-            print(f"خطا در دریافت محتوا از {url}: {e}")
-            
-    print(f"مجموعاً {len(all_configs)} کانفیگ از منابع مختلف جمع‌آوری شد.")
-    return all_configs
-
-def decode_base64_configs(configs):
-    """محتوای Base64 را دیکود می‌کند."""
-    decoded_configs = []
-    for config in configs:
-        if not any(proto in config for proto in SETTINGS.get("protocols", [])):
+            content = response.text
+            # دیکود کردن محتوای Base64 در صورت نیاز
             try:
-                padding = '=' * (-len(config) % 4)
-                decoded_content = base64.b64decode(config + padding).decode('utf-8')
-                decoded_configs.extend(decoded_content.splitlines())
+                if len(content) % 4 != 0:
+                    content += '=' * (4 - len(content) % 4)
+                decoded_content = base64.b64decode(content).decode('utf-8')
+                all_configs.update(decoded_content.splitlines())
             except Exception:
-                decoded_configs.append(config)
-        else:
-            decoded_configs.append(config)
-    return decoded_configs
+                all_configs.update(content.splitlines())
+        except requests.RequestException as e:
+            print(f"خطا در دریافت منبع {url}: {e}")
+    
+    return list(filter(None, all_configs))
 
-# --- بخش تست و ارزیابی کانفیگ‌ها ---
-
-class V2RayPingTester:
-    """تست سریع اتصال برای سنجش در دسترس بودن و پینگ اولیه."""
-    def __init__(self, configs, timeout=4):
-        self.configs = configs
-        self.timeout = timeout
-        self.max_threads = 400
-
-    def parse_config(self, config_link):
+def parse_config(link):
+    """لینک کانفیگ را به یک دیکشنری ساختاریافته تبدیل می‌کند."""
+    link = link.strip()
+    if link.startswith("vmess://"):
         try:
-            if "://" not in config_link: return None
-            uri_part = config_link.split('://')[1]
-            host_part = uri_part.split('#')[0].split('?')[0]
-            if '@' in host_part: host_port_str = host_part.split('@')[1]
-            else: host_port_str = host_part
-            if ':' in host_port_str:
-                host = host_port_str.rsplit(':', 1)[0].strip("[]")
-                port = int(host_port_str.rsplit(':', 1)[1])
-            else:
-                host = host_port_str
-                port = 443
-            return host, port
+            decoded_part = base64.b64decode(link.replace("vmess://", "")).decode('utf-8')
+            data = json.loads(decoded_part)
+            return {'type': 'vmess', 'data': data, 'original_link': link}
         except Exception:
             return None
-
-    def test_single(self, config):
-        parsed_data = self.parse_config(config)
-        if not parsed_data: return None
-        host, port = parsed_data
+    elif link.startswith("vless://") or link.startswith("trojan://"):
         try:
-            start_time = time.time()
-            sock = socket.create_connection((host, port), timeout=self.timeout)
-            ping_ms = int((time.time() - start_time) * 1000)
-            sock.close()
-            return {'config': config, 'ping': ping_ms}
+            parsed_url = urlparse(link)
+            protocol = parsed_url.scheme
+            host = parsed_url.hostname
+            port = parsed_url.port
+            uuid_or_password = unquote(parsed_url.username)
+            if not all([protocol, host, port, uuid_or_password]):
+                return None
+            return {'type': protocol, 'data': {'add': host, 'port': port, 'id': uuid_or_password, 'ps': unquote(parsed_url.fragment)}, 'original_link': link}
         except Exception:
             return None
+    return None
 
-    def run(self):
-        """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
-        reachable_configs = []
-        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
-            future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
-            for i, future in enumerate(as_completed(future_to_config)):
-                result = future.result()
-                if result:
-                    reachable_configs.append(result)
-                print(f"\rتست کانفیگ‌ها: {i+1}/{len(self.configs)}", end="")
-        print(f"\nتست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
-        return sorted(reachable_configs, key=lambda x: x['ping'])
+class V2RayTester:
+    """یک کانفیگ را با استفاده از هسته V2Ray تست می‌کند."""
+    def __init__(self, config_info, port):
+        self.config_info = config_info
+        self.port = port
+        self.proc = None
 
-# --- بخش اصلی و اجرای برنامه ---
+    def generate_config_file(self):
+        """فایل کانفیگ JSON را برای v2ray-core می‌سازد."""
+        protocol = self.config_info['type']
+        data = self.config_info['data']
+        
+        config = {
+            "inbounds": [{"port": self.port, "protocol": "socks", "listen": "127.0.0.1"}],
+            "outbounds": [{"protocol": protocol, "settings": {}}]
+        }
+
+        if protocol == 'vmess':
+            config['outbounds'][0]['settings']['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id'], 'alterId': data.get('aid', 0)}]}]
+        elif protocol == 'vless':
+            config['outbounds'][0]['settings']['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id']}]}]
+        elif protocol == 'trojan':
+            config['outbounds'][0]['settings']['servers'] = [{'address': data['add'], 'port': int(data['port']), 'password': data['id']}]
+
+        # نوشتن کانفیگ در یک فایل موقت
+        self.config_path = f"temp_config_{self.port}.json"
+        with open(self.config_path, 'w') as f:
+            json.dump(config, f)
+
+    def run_test(self):
+        """پروسه V2Ray را اجرا کرده و تست اتصال را انجام می‌دهد."""
+        self.generate_config_file()
+        cmd = [str(V2RAY_CORE_PATH), "run", "-c", self.config_path]
+        
+        start_time = time.time()
+        try:
+            self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            time.sleep(2) # زمان برای شروع به کار V2Ray
+            
+            proxies = {'http': f'socks5://127.0.0.1:{self.port}', 'https': f'socks5://127.0.0.1:{self.port}'}
+            response = requests.get("http://www.gstatic.com/generate_204", proxies=proxies, timeout=SETTINGS.get("timeout", 5))
+            
+            if response.status_code == 204:
+                latency = int((time.time() - start_time) * 1000)
+                return self.config_info['original_link'], latency
+        except Exception:
+            return None, -1
+        finally:
+            if self.proc:
+                self.proc.terminate()
+                self.proc.wait()
+            if os.path.exists(self.config_path):
+                os.remove(self.config_path)
+        return None, -1
+
+def worker(config_queue, result_queue, port):
+    """یک ترد کارگر که کانفیگ‌ها را از صف برداشته و تست می‌کند."""
+    while not config_queue.empty():
+        try:
+            config_info = config_queue.get_nowait()
+            tester = V2RayTester(config_info, port)
+            link, latency = tester.run_test()
+            if link:
+                result_queue.put({'config': link, 'ping': latency})
+        except queue.Empty:
+            break
+        except Exception as e:
+            print(f"خطا در ترد {port}: {e}")
+
+def get_country(ip_address, geo_reader):
+    """کشور را بر اساس آدرس IP تشخیص می‌دهد."""
+    if not ip_address or not geo_reader:
+        return "Unknown"
+    try:
+        response = geo_reader.country(ip_address)
+        return response.country.iso_code
+    except (geoip2.errors.AddressNotFoundError, ValueError):
+        return "Unknown"
 
 def main():
     start_time = time.time()
-    base_out_dir = create_output_dirs()
-    
-    raw_configs = get_all_sources_content()
-    decoded_configs = decode_base64_configs(raw_configs)
-    unique_configs = sorted(list(set(filter(None, decoded_configs))))
-    
-    warp_configs = [c for c in unique_configs if c.startswith("warp://")]
-    v2ray_configs = [c for c in unique_configs if not c.startswith("warp://") and any(p in c for p in SETTINGS.get("protocols", []))]
-    
-    limit = SETTINGS.get("all_configs_limit", 4000)
-    configs_to_test = v2ray_configs[:limit]
-    
-    print(f"تعداد {len(configs_to_test)} کانفیگ برای تست آماده شد.")
+    setup_directories()
 
-    tester = V2RayPingTester(configs_to_test, timeout=SETTINGS.get("timeout", 4))
-    final_results = tester.run()
-    
-    if not final_results:
-        print("هیچ کانفیگ سالمی پیدا نشد.")
-    else:
-        # نوشتن فایل‌های خروجی
-        all_final_configs = [res['config'] for res in final_results]
-        v2ray_dir = os.path.join(base_out_dir, "v2ray")
-        base64_dir = os.path.join(base_out_dir, "base64")
-        all_v2_str = "\n".join(all_final_configs)
-        with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(all_v2_str)
-        with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode(all_v2_str.encode("utf-8")).decode("utf-8"))
-        lines_per_file = SETTINGS.get("lines_per_file", 200)
-        save_split_files(all_final_configs, os.path.join(v2ray_dir, "subs"), lines_per_file)
-        save_split_files(all_final_configs, os.path.join(base64_dir, "subs"), lines_per_file, is_base64=True)
-        super_limit = SETTINGS.get("supersub_configs_limit", 200)
-        super_configs = all_final_configs[:super_limit]
-        super_configs_str = "\n".join(super_configs)
-        with open(os.path.join(v2ray_dir, "super-sub.txt"), "w", encoding="utf-8") as f: f.write(super_configs_str)
-        filtered_dir = os.path.join(base_out_dir, "filtered", "subs")
-        protocol_groups = {}
-        for res in final_results:
-            config_link = res['config']
-            try:
-                protocol = config_link.split("://")[0]
-                if protocol not in protocol_groups: protocol_groups[protocol] = []
-                protocol_groups[protocol].append(config_link)
-            except IndexError: continue
-        for protocol, configs in protocol_groups.items():
-            if configs:
-                protocol_str = "\n".join(configs)
-                with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f: f.write(protocol_str)
-                print(f"✅ فایل اشتراک برای پروتکل '{protocol}' با {len(configs)} کانفیگ ساخته شد.")
+    # ۱. جمع‌آوری کانفیگ‌ها
+    all_links = get_sources()
+    parsed_configs = [parse_config(link) for link in all_links]
+    valid_configs = list(filter(None, parsed_configs))
+    print(f"تعداد {len(valid_configs)} کانفیگ معتبر برای تست آماده شد.")
 
-    if warp_configs:
-        warp_str = "\n".join(warp_configs)
-        with open(os.path.join(base_out_dir, "warp", "all_sub.txt"), "w", encoding="utf-8") as f: f.write(warp_str)
-        print(f"✅ فایل اشتراک Warp با {len(warp_configs)} کانفیگ ساخته شد.")
+    # ۲. تست کانفیگ‌ها به صورت موازی
+    config_q = queue.Queue()
+    for config in valid_configs:
+        config_q.put(config)
+    
+    result_q = queue.Queue()
+    threads = []
+    num_threads = SETTINGS.get("max_threads", 50)
+
+    for i in range(num_threads):
+        port = 10800 + i
+        thread = threading.Thread(target=worker, args=(config_q, result_q, port))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    # ۳. جمع‌آوری نتایج
+    final_results = []
+    while not result_q.empty():
+        final_results.append(result_q.get())
+
+    final_results.sort(key=lambda x: x['ping'])
+    print(f"تست کامل شد. {len(final_results)} کانفیگ سالم پیدا شد.")
+
+    # ۴. دسته‌بندی و ذخیره‌سازی
+    all_final_links = [res['config'] for res in final_results]
+    
+    # ذخیره فایل‌های اصلی
+    with open(os.path.join(MERGED_DIR, "all_sub.txt"), "w") as f:
+        f.write("\n".join(all_final_links))
+    
+    with open(os.path.join(BASE64_DIR, "all_sub.txt"), "w") as f:
+        f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
+    
+    # دسته‌بندی بر اساس پروتکل
+    by_protocol = defaultdict(list)
+    for res in final_results:
+        proto = res['config'].split("://")[0]
+        by_protocol[proto].append(res['config'])
+    
+    for proto, configs in by_protocol.items():
+        with open(os.path.join(PROTOCOLS_DIR, f"{proto}.txt"), "w") as f:
+            f.write("\n".join(configs))
+        print(f"✅ فایل اشتراک برای پروتکل '{proto}' با {len(configs)} کانفیگ ساخته شد.")
+
+    # دسته‌بندی بر اساس کشور
+    geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
+    by_country = defaultdict(list)
+    for res in final_results:
+        try:
+            host = urlparse(res['config']).hostname
+            ip = socket.gethostbyname(host)
+            country = get_country(ip, geo_reader)
+            by_country[country].append(res['config'])
+        except Exception:
+            by_country["Unknown"].append(res['config'])
+    
+    for country, configs in by_country.items():
+        with open(os.path.join(REGIONS_DIR, f"{country}.txt"), "w") as f:
+            f.write("\n".join(configs))
+    
+    if geo_reader:
+        geo_reader.close()
 
     print(f"\nکل فرآیند در {time.time() - start_time:.2f} ثانیه به پایان رسید.")
 
