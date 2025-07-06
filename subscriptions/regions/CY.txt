@@ -1,4 +1,4 @@
-trojan://Aimer@176.53.144.206:8443?allowInsecure=0&sni=epmk.ambercc.filegear-sg.me&ws=1&wspath=%2F#%F0%9F%87%B7%F0%9F%87%BA%20%E4%BF%84%E7%BD%97%E6%96%AF%20V2CROSS.COM
 trojan://Aimer@176.53.144.206:8443?security=tls&sni=epmk.ambercc.filegear-sg.me#%F0%9F%8F%81RELAY-176.53.144.206-0750
+trojan://Aimer@176.53.144.206:8443?allowInsecure=0&sni=epmk.ambercc.filegear-sg.me&ws=1&wspath=%2F#%F0%9F%87%B7%F0%9F%87%BA%20%E4%BF%84%E7%BD%97%E6%96%AF%20V2CROSS.COM
 trojan://Aimer@45.150.115.195:2087?security=tls&sni=epmk.ambercc.filegear-sg.me#%F0%9F%8F%81RELAY-45.150.115.195-0751
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpmOGY3YUN6Y1BLYnNGOHAz@134.255.210.49:990#%F0%9F%87%A8%F0%9F%87%BECY-134.255.210.49-4967
