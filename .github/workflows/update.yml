@@ -2,8 +2,8 @@ name: Update V2Ray Subscriptions
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # اجرا هر ۶ ساعت
-  workflow_dispatch: # امکان اجرای دستی
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   update-configs:
@@ -19,20 +19,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      # مرحله جدید و نهایی: دانلود و آماده‌سازی هسته رسمی sing-box
-      - name: Download and Setup sing-box
-        run: |
-          # دانلود آخرین نسخه رسمی sing-box
-          wget https://github.com/SagerNet/sing-box/releases/download/v1.9.1/sing-box-1.9.1-linux-amd64.tar.gz
-          # استخراج فایل
-          tar -xvf sing-box-1.9.1-linux-amd64.tar.gz
-          # رفتن به پوشه استخراج شده
-          cd sing-box-1.9.1-linux-amd64
-          # دادن دسترسی اجرایی
-          chmod +x sing-box
-          # کپی کردن فایل اجرایی به ریشه برای دسترسی آسان‌تر
-          cp sing-box ../
 
       - name: Install dependencies
         run: |
