@@ -155,13 +155,11 @@ def main():
     raw_configs = get_all_sources_content()
     decoded_configs = decode_base64_configs(raw_configs)
     
-    # حذف کانفیگ‌های تکراری، خالی و غیرمجاز
     unique_configs = sorted(list(set(filter(None, decoded_configs))))
     valid_protocol_configs = [
         c for c in unique_configs if any(p in c for p in SETTINGS.get("protocols", []))
     ]
     
-    # محدود کردن تعداد کانفیگ‌ها برای تست
     limit = SETTINGS.get("all_configs_limit", 3000)
     configs_to_test = valid_protocol_configs[:limit]
     
@@ -182,7 +180,6 @@ def main():
     all_configs_str = "\n".join([res['config'] for res in reachable_results])
     with open(os.path.join(out_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
         f.write(all_configs_str)
-    # ساخت نسخه Base64
     with open(os.path.join(out_dir, "all_sub_b64.txt"), "w", encoding="utf-8") as f:
         f.write(base64.b64encode(all_configs_str.encode("utf-8")).decode("utf-8"))
 
@@ -192,11 +189,37 @@ def main():
     super_configs_str = "\n".join([res['config'] for res in super_configs])
     with open(os.path.join(out_dir, "super_sub.txt"), "w", encoding="utf-8") as f:
         f.write(super_configs_str)
-    # ساخت نسخه Base64
     with open(os.path.join(out_dir, "super_sub_b64.txt"), "w", encoding="utf-8") as f:
         f.write(base64.b64encode(super_configs_str.encode("utf-8")).decode("utf-8"))
 
-    print(f"فایل‌های اشتراک در پوشه '{out_dir}' ذخیره شدند.")
+    # --- بخش جدید: ساخت فایل‌های اشتراک بر اساس پروتکل ---
+    print("\nدر حال ساخت فایل‌های اشتراک بر اساس پروتکل...")
+    protocol_configs = {}
+    for res in reachable_results:
+        config_link = res['config']
+        try:
+            protocol = config_link.split("://")[0]
+            if protocol not in protocol_configs:
+                protocol_configs[protocol] = []
+            protocol_configs[protocol].append(config_link)
+        except IndexError:
+            continue # اگر کانفیگ فرمت درستی نداشته باشد، از آن رد شو
+
+    for protocol, configs in protocol_configs.items():
+        if configs:
+            protocol_str = "\n".join(configs)
+            # ساخت فایل متنی
+            file_path = os.path.join(out_dir, f"{protocol}_sub.txt")
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(protocol_str)
+            # ساخت نسخه Base64
+            b64_file_path = os.path.join(out_dir, f"{protocol}_sub_b64.txt")
+            with open(b64_file_path, "w", encoding="utf-8") as f:
+                f.write(base64.b64encode(protocol_str.encode("utf-8")).decode("utf-8"))
+            print(f"✅ فایل اشتراک برای پروتکل '{protocol}' با {len(configs)} کانفیگ ساخته شد.")
+    # --- پایان بخش جدید ---
+
+    print(f"\nفایل‌های اشتراک در پوشه '{out_dir}' ذخیره شدند.")
     
     end_time = time.time()
     print(f"کل فرآیند در {end_time - start_time:.2f} ثانیه به پایان رسید.")
