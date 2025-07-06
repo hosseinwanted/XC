@@ -1,0 +1,4 @@
+trojan://Aimer@154.197.64.206:443?allowInsecure=0&sni=epml.ambercc.filegear-sg.me&ws=1&wspath=%2F#%F0%9F%87%BF%F0%9F%87%A6%20%E5%8D%97%E9%9D%9E%20V2CROSS.COM
+trojan://Aimer@154.197.64.206:443?security=tls&sni=epml.ambercc.filegear-sg.me#%F0%9F%8F%81RELAY-154.197.64.206-0756
+vless://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@154.194.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=0#🇸🇬[openproxylist.com]
+ss://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@154.194.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=0#🇸🇬[openproxylist.com]

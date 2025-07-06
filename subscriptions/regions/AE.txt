@@ -1,0 +1,2 @@
+ss://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@94.140.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=1#🇸🇬[openproxylist.com]
+vless://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@94.140.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=1#🇸🇬[openproxylist.com]
