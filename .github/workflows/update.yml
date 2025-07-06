@@ -22,41 +22,36 @@ jobs:
 
     steps:
       # مرحله ۱: دریافت کدها از مخزن
-      # از اکشن actions/checkout برای دانلود کدهای شما استفاده می‌کند
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # مرحله ۲: نصب و راه‌اندازی پایتون
-      # نسخه‌ی پایتون را مشخص می‌کند
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # می‌توانید از نسخه‌های دیگر هم استفاده کنید
+          python-version: '3.11'
 
       # مرحله ۳: نصب کتابخانه‌های مورد نیاز
-      # دستور pip install را برای نصب نیازمندی‌ها از فایل requirements.txt اجرا می‌کند
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       # مرحله ۴: اجرای اسکریپت اصلی پایتون
-      # اسکریپت شما را برای انجام فرآیند اصلی اجرا می‌کند
       - name: Run the update script
         run: python src/main.py
 
-      # مرحله ۵: کامیت و پوش کردن تغییرات
-      # این اکشن فایل‌های جدید یا تغییریافته در پوشه subscriptions را به مخزن شما اضافه می‌کند
+      # مرحله ۵: تنظیم تاریخ فعلی برای استفاده در پیام کامیت
+      - name: Set current date
+        id: date
+        run: echo "date=$(date -u +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
+      # مرحله ۶: کامیت و پوش کردن تغییرات
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9
         with:
-          # پیامی که برای کامیت ثبت می‌شود. شامل تاریخ و زمان فعلی است
-          message: '✔️ Update Subscriptions | [UTC] ${{ env.GIT_DATE }}'
-          # پوشه‌ای که باید تغییرات آن بررسی شود
+          # استفاده از متغیر محیطی که در مرحله قبل تنظیم شد
+          message: '✔️ Update Subscriptions | [UTC] ${{ env.date }}'
           add: 'subscriptions/*'
-          # نام و ایمیل نویسنده کامیت
           author_name: GitHub Actions
           author_email: actions@github.com
-        env:
-          # تنظیم متغیر محیطی برای تاریخ
-          GIT_DATE: $(date -u +'%Y-%m-%d %H:%M:%S')
