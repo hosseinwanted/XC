@@ -17,6 +17,7 @@
         body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #cbd5e1; }
         .card { background-color: #0f172a; border: 1px solid #1e293b; }
         .btn-primary { background-color: #0891b2; color: white; }
+        .btn-primary:disabled { background-color: #1e293b; color: #475569; cursor: not-allowed; }
         .btn-secondary { background-color: #334155; color: #e2e8f0; }
         .tab-active { color: #06b6d4; border-color: #06b6d4; }
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
@@ -88,7 +89,7 @@
                  <section class="card p-6 rounded-2xl mb-8 shadow-lg">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                         <div class="flex items-center justify-center md:justify-start gap-4">
-                            <button id="start-test-btn" class="btn-primary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105"><i class='bx bx-play-circle text-2xl'></i>شروع تست</button>
+                            <button id="start-test-btn" class="btn-primary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105" disabled><i class='bx bx-play-circle text-2xl'></i>شروع تست</button>
                             <button id="stop-test-btn" class="btn-secondary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105 hidden"><i class='bx bx-stop-circle text-2xl'></i>توقف</button>
                         </div>
                         <div class="col-span-2">
@@ -140,13 +141,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CONFIG ---
             const REPO_BASE_URL = "https://raw.githubusercontent.com/Ganjabady/XC/main";
             const STATS_URL = `${REPO_BASE_URL}/reports/stats.json`;
             const MAX_WORKERS = 50;
             const TEST_TIMEOUT_MS = 5000;
 
-            // --- ELEMENTS ---
             const elements = {
                 startBtn: document.getElementById('start-test-btn'),
                 stopBtn: document.getElementById('stop-test-btn'),
@@ -166,12 +165,10 @@
                 tabs: document.querySelectorAll('.tab-btn'),
                 tabContents: document.querySelectorAll('.tab-content'),
                 subSelect: document.getElementById('sub-select'),
-                // Dashboard elements
                 totalConfigsStatDash: document.getElementById('total-configs-stat'),
                 lastUpdateStatDash: document.getElementById('last-update-stat'),
                 countryChartCanvas: document.getElementById('country-chart'),
                 mainSubsListDashboard: document.getElementById('main-subs-list-dashboard'),
-                // All links tab elements
                 mainSubsList: document.getElementById('main-subs-list'),
                 protocolSubsList: document.getElementById('protocol-subs-list'),
                 regionSubsList: document.getElementById('region-subs-list'),
@@ -183,7 +180,6 @@
             let testQueue = [];
             let countryChart = null;
 
-            // --- CORE FUNCTIONS ---
             function parseConfig(link) {
                 try {
                     if (!link.includes("://")) return null;
@@ -255,27 +251,27 @@
             }
 
             async function startTest() {
-                if (isTesting) return;
+                if (isTesting || !elements.subSelect.value) return;
                 isTesting = true;
                 elements.startBtn.classList.add('hidden');
                 elements.stopBtn.classList.remove('hidden');
                 elements.initialMessage.classList.add('hidden');
                 elements.resultsGrid.innerHTML = '';
                 testedConfigs = [];
+                updateStats();
                 
-                const selectedSubUrl = elements.subSelect.value;
                 try {
-                    const response = await fetch(selectedSubUrl);
-                    if (!response.ok) throw new Error('Network response was not ok');
+                    const response = await fetch(elements.subSelect.value);
+                    if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
                     const text = await response.text();
                     allConfigs = text.split('\n').map(parseConfig).filter(Boolean);
                     elements.totalStat.textContent = allConfigs.length;
-                    
+                    if (allConfigs.length === 0) throw new Error("Subscription file is empty.");
                     testQueue = [...allConfigs];
                     for (let i = 0; i < MAX_WORKERS; i++) { worker(); }
                 } catch (error) {
-                    console.error("Failed to fetch subscription:", error);
-                    elements.initialMessage.innerHTML = `<i class='bx bx-error text-6xl text-red-500'></i><p class="mt-4 text-slate-400">خطا در دریافت لیست اشتراک.</p>`;
+                    console.error("Failed to fetch or process subscription:", error);
+                    elements.initialMessage.innerHTML = `<i class='bx bx-error text-6xl text-red-500'></i><p class="mt-4 text-slate-400">خطا در دریافت لیست اشتراک. لطفاً از اتصال خود و معتبر بودن لینک مطمئن شوید.</p>`;
                     elements.initialMessage.classList.remove('hidden');
                     stopTest();
                 }
@@ -298,26 +294,20 @@
                     if (!statsResponse.ok) throw new Error('Failed to fetch stats');
                     const stats = await statsResponse.json();
 
-                    // Dashboard Tab
                     elements.totalConfigsStatDash.textContent = stats.total_configs;
                     elements.lastUpdateStatDash.textContent = new Date(stats.update_time).toLocaleString('fa-IR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
                     renderCountryChart(stats.countries);
                     
-                    // Subscription Links Tab & Tester Dropdown
-                    const subLinks = {
-                        'لینک کامل': `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`,
-                        'لینک Base64': `${REPO_BASE_URL}/subscriptions/base64/all_sub.txt`
-                    };
-                    let mainSubsHtml = '';
-                    for (const [title, url] of Object.entries(subLinks)) {
-                        mainSubsHtml += createSubLinkItem(title, url);
-                    }
+                    const mainSubUrl = `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`;
+                    const base64SubUrl = `${REPO_BASE_URL}/subscriptions/base64/all_sub.txt`;
+                    
+                    let mainSubsHtml = createSubLinkItem('لینک کامل', mainSubUrl) + createSubLinkItem('لینک Base64', base64SubUrl);
                     elements.mainSubsListDashboard.innerHTML = mainSubsHtml;
                     elements.mainSubsList.innerHTML = mainSubsHtml;
 
                     let protocolHtml = '';
                     let subSelectOptions = '<option value="" disabled selected>یک لیست برای تست انتخاب کنید</option>';
-                    subSelectOptions += `<option value="${subLinks['لینک کامل']}">همه کانفیگ‌ها</option>`;
+                    subSelectOptions += `<option value="${mainSubUrl}">همه کانفیگ‌ها</option>`;
 
                     ['vless', 'vmess', 'trojan', 'ss'].forEach(p => {
                         const url = `${REPO_BASE_URL}/subscriptions/filtered/subs/${p}.txt`;
@@ -359,6 +349,9 @@
             elements.startBtn.addEventListener('click', startTest);
             elements.stopBtn.addEventListener('click', stopTest);
             elements.sortSelect.addEventListener('change', sortResults);
+            elements.subSelect.addEventListener('change', () => {
+                elements.startBtn.disabled = !elements.subSelect.value;
+            });
             elements.searchInput.addEventListener('input', () => {
                 const searchTerm = elements.searchInput.value.toLowerCase();
                 Array.from(elements.resultsGrid.children).forEach(card => {
