@@ -5,11 +5,13 @@ import requests
 import socket
 import time
 import random
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, unquote_plus, quote
 from collections import defaultdict
 from pathlib import Path
 import geoip2.database
+from bs4 import BeautifulSoup
 
 # --- بخش تنظیمات ---
 
@@ -27,6 +29,7 @@ GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
 # خواندن لیست برندها و اموجی‌ها از تنظیمات
 BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
 EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
+REPORTS_DIR = "reports"
 
 def setup_directories():
     """پوشه‌های مورد نیاز را ایجاد می‌کند."""
@@ -36,18 +39,19 @@ def setup_directories():
         os.path.join(base_dir, "v2ray"),
         os.path.join(base_dir, "base64"),
         os.path.join(base_dir, "filtered", "subs"),
-        os.path.join(base_dir, "regions")
+        os.path.join(base_dir, "regions"),
+        REPORTS_DIR
     ]
     for d in dirs_to_create:
         os.makedirs(d, exist_ok=True)
 
-def get_sources():
-    """کانفیگ‌ها را از منابع دریافت می‌کند."""
+def get_sources_from_files():
+    """کانفیگ‌ها را از فایل‌های مخازن گیت‌هاب دریافت می‌کند."""
     all_configs = set()
     sources = SETTINGS.get("sources", {}).get("files", [])
-    print("📥 شروع جمع‌آوری کانفیگ‌ها از منابع...")
+    print("📥 شروع جمع‌آوری کانفیگ‌ها از فایل‌ها...")
     for source_path in sources:
-        url = f"https://raw.githubusercontent.com/{source_path}"
+        url = f"https://raw.githubusercontent.com/{source_path.strip()}"
         try:
             response = requests.get(url, timeout=30)
             response.raise_for_status()
@@ -60,9 +64,36 @@ def get_sources():
                 all_configs.update(content.splitlines())
         except requests.RequestException as e:
             print(f"⚠️ خطا در دریافت منبع {url}: {e}")
+    return all_configs
+
+def scrape_telegram_channels():
+    """کانفیگ‌ها را از کانال‌های تلگرام استخراج می‌کند."""
+    all_configs = set()
+    channels = SETTINGS.get("sources", {}).get("channels", [])
+    print("✈️ شروع جمع‌آوری کانفیگ‌ها از کانال‌های تلگرام...")
     
-    print(f"✅ مجموعاً {len(all_configs)} کانفیگ از منابع مختلف جمع‌آوری شد.")
-    return list(filter(None, all_configs))
+    patterns = {
+        'vmess': r'vmess://[^\s<>"\'`]+',
+        'vless': r'vless://[^\s<>"\'`]+',
+        'trojan': r'trojan://[^\s<>"\'`]+',
+        'ss': r'ss://[^\s<>"\'`]+'
+    }
+
+    for channel in channels:
+        url = f"https://t.me/s/{channel.strip()}"
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            page_text = soup.get_text()
+            for proto, pattern in patterns.items():
+                matches = re.findall(pattern, page_text)
+                all_configs.update(matches)
+        except requests.RequestException as e:
+            print(f"⚠️ خطا در دسترسی به کانال {channel}: {e}")
+    
+    return all_configs
 
 class V2RayPingTester:
     """تست سریع اتصال برای سنجش در دسترس بودن و پینگ اولیه."""
@@ -94,8 +125,6 @@ class V2RayPingTester:
             with socket.create_connection((host, port), timeout=self.timeout) as sock:
                 ping_ms = int((time.time() - start_time) * 1000)
                 return {'config': config, 'ping': ping_ms, 'host': host}
-        except (socket.timeout, ConnectionRefusedError, OSError, socket.gaierror):
-            return None
         except Exception:
             return None
 
@@ -133,7 +162,10 @@ def main():
     start_time = time.time()
     setup_directories()
 
-    unique_configs = get_sources()
+    file_configs = get_sources_from_files()
+    channel_configs = scrape_telegram_channels()
+    
+    unique_configs = list(file_configs.union(channel_configs))
     print(f"🔬 تعداد {len(unique_configs)} کانفیگ یکتا برای تست آماده شد.\n")
 
     tester = V2RayPingTester(unique_configs, timeout=SETTINGS.get("timeout", 5))
@@ -151,13 +183,12 @@ def main():
                 ip = socket.gethostbyname(res['host'])
                 country, flag = get_country_and_flag(ip, geo_reader)
             except socket.gaierror:
-                country, flag = "Unk.", "🌐"
+                country, flag = "Unknown", "🌐"
 
-            # --- بخش جدید: انتخاب تصادفی برند و اموجی ---
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
             
-            new_name = f"{flag} {country} #{i:03d} |{selected_brand} {selected_emoji}"
+            new_name = f"{selected_brand} #{i:03d} | {selected_emoji} {flag} {country}"
             
             original_link = res['config'].split('#')[0]
             named_config = f"{original_link}#{quote(new_name)}"
@@ -190,6 +221,16 @@ def main():
         with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write("\n".join(all_final_links))
         with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
         print("✅ تمام فایل‌ها با موفقیت ذخیره شدند.")
+
+        report_data = {
+            "update_time": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "total_configs": len(final_results),
+            "countries": {country: len(configs) for country, configs in by_country.items()}
+        }
+        with open(os.path.join(REPORTS_DIR, "stats.json"), "w") as f:
+            json.dump(report_data, f, indent=2)
+        print("📊 گزارش برای README ساخته شد.")
+
     else:
         print("🔴 هیچ کانفیگ سالمی پیدا نشد.")
 
