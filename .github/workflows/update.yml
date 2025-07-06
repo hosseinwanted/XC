@@ -20,17 +20,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Download and Setup Tools
+      - name: Download and Setup V2Ray
         run: |
           echo "Downloading V2Ray-Core..."
           wget -q https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
           unzip -q v2ray-linux-64.zip -d v2ray_core
           chmod +x v2ray_core/v2ray
           echo "V2Ray is ready."
-
-          echo "Downloading GeoIP Database..."
-          wget -q https://git.io/GeoLite2-Country.mmdb -O GeoLite2-Country.mmdb
-          echo "GeoIP DB is ready."
 
       - name: Install dependencies
         run: |
@@ -44,7 +40,8 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add subscriptions/ reports/
+          # فقط فایل‌هایی را اضافه کن که وجود دارند
+          git add subscriptions/ || echo "No subscriptions folder to add"
           # فقط در صورتی کامیت کن که تغییری وجود داشته باشد
           if ! git diff --staged --quiet; then
             git commit -m "✅ Update Subscriptions | [UTC] $(date -u +'%Y-%m-%d %H:%M:%S')"
