@@ -1,4 +1,4 @@
-vless://89b3cbba-e6ac-485a-9481-976a0415eab9@38.180.100.80:443?encryption=none&security=tls&sni=vz.ylks.xyz&type=ws&host=vz.ylks.xyz&path=%2F%3Fproxyip%3Dproxyip.oracle.fxxk.dedyn.io#%40V2XCore%20%2312769%20%7C%20%F0%9F%91%91%20%F0%9F%87%B7%F0%9F%87%B8%20RS
-ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@194.71.126.31:989#%40V2XCore%20%2312775%20%7C%20%E2%9A%A1%EF%B8%8F%20%F0%9F%87%B7%F0%9F%87%B8%20RS
-vless://20fda433-1864-433b-b3dd-8f119fe4cafd@217.196.104.83:8443?type=ws&encryption=none&host=happy.mianfeicf.lol&path=%2F%3Fed%3D2560&security=tls&sni=happy.mianfeicf.lol#%40V2XCore%20%2312790%20%7C%20%E2%9A%9C%EF%B8%8F%20%F0%9F%87%B7%F0%9F%87%B8%20RS
-ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@185.186.77.220:989#t.me/V2XCore%20%2312848%20%7C%20%F0%9F%91%91%20%F0%9F%87%B7%F0%9F%87%B8%20RS
+ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@185.186.77.220:989#%40V2XCore%20%2312757%20%7C%20%E2%9A%9C%EF%B8%8F%20%F0%9F%87%B7%F0%9F%87%B8%20RS
+vless://89b3cbba-e6ac-485a-9481-976a0415eab9@38.180.100.80:443?encryption=none&security=tls&sni=vz.ylks.xyz&type=ws&host=vz.ylks.xyz&path=%2F%3Fproxyip%3Dproxyip.oracle.fxxk.dedyn.io#%40V2XCore%20%2312758%20%7C%20%F0%9F%94%B0%20%F0%9F%87%B7%F0%9F%87%B8%20RS
+vless://20fda433-1864-433b-b3dd-8f119fe4cafd@217.196.104.83:8443?type=ws&encryption=none&host=happy.mianfeicf.lol&path=%2F%3Fed%3D2560&security=tls&sni=happy.mianfeicf.lol#%40V2XCore%20%2312781%20%7C%20%E2%9C%A8%20%F0%9F%87%B7%F0%9F%87%B8%20RS
+ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@194.71.126.31:989#%40V2XCore%20%2312915%20%7C%20%E2%9C%A8%20%F0%9F%87%B7%F0%9F%87%B8%20RS
