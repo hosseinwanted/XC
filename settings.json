@@ -1,27 +1,25 @@
 {
-  "raw_repo": "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main",
-  "tag": "⚡ My-Configs | ",
   "out_dir": "subscriptions",
-  "all_configs_limit": 3000,
-  "supersub_configs_limit": 200,
-  "timeout": 5,
-  "protocols": [
-    "vmess",
-    "vless",
-    "trojan",
-    "ss",
-    "ssr",
-    "tuic",
-    "hy2"
+  "brand": "V2XCore",
+  "brands": [
+    "@V2XCore",
+    "t.me/V2XCore"
   ],
+  "emojis": [
+    "⚡️", "🔥", "🚀", "💎", "🎯", "✨", "👑", "🔰", "⚜️"
+  ],
+  "protocols": ["vmess", "vless", "trojan", "ss"],
   "sources": {
     "files": [
+      "mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
       "ALIILAPRO/v2rayNG-Config/main/sub.txt",
-      "mahdibland/V2RayAggregator/master/sub/sub_merge_base64.txt",
-      "yebekhe/TVC/main/subscriptions/xray/base64/mix",
-      "mfuu/v2ray/master/v2ray"
-    ],
-    "dirs": [],
-    "warp": []
-  }
+      "yebekhe/V2Hub/main/merged",
+      "soroushmirzaei/V2Ray-Configs/main/All_Configs_Sub.txt",
+      "sashalsk/V2Ray/main/V2Ray-list-new",
+      "Shaparak-Config/V2ray-Configs/main/All-Configs-base64",
+      "Morteza-Bashsiz/CF-Config/main/configs.txt"
+    ]
+  },
+  "timeout": 5,
+  "all_configs_limit": 5000
 }
