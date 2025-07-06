@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>V2XCore | داشبورد کانفیگ‌های رایگان</title>
+    <title>V2XCore | داشبورد جامع کانفیگ‌ها</title>
     <!-- Chosen Palette: Midnight Blue & Electric Cyan -->
-    <!-- Application Structure Plan: A single-page dashboard application designed for optimal user flow. The structure prioritizes immediate access to key information and actions. 1. Header: Clean navigation and branding. 2. Hero Section: Displays vital stats (total configs, last update) and primary subscription links for quick access. 3. Tabbed Main Section: Organizes content logically into user tasks: "All Configs" for browsing, "By Country" for regional filtering, and "Subscription Links" for advanced users. This task-oriented, tabbed structure is more intuitive than a static sidebar, guiding the user through exploration without overwhelming them. 4. Footer: Essential links. This architecture makes the most critical data immediately accessible while keeping detailed views organized and just a click away. -->
-    <!-- Visualization & Content Choices: 1. Report Info: Full list of V2Ray configs. Goal: Allow easy browsing, copying, and QR code generation. Viz/Method: Interactive HTML table. Interaction: Live search/filter, one-click copy, and modal QR code display. Justification: A searchable table is the most efficient way to handle a large list of text-based data. Library: Vanilla JS, qrcode.js. 2. Report Info: Geographic distribution of servers. Goal: Provide a quick visual overview of server locations. Viz/Method: Horizontal Bar Chart. Interaction: Tooltips showing exact counts on hover. Justification: A bar chart is excellent for comparing categorical data (countries). Library: Chart.js. 3. Report Info: All subscription links (main, base64, per-protocol, per-region). Goal: Centralize all subscription options for easy access. Viz/Method: Grouped lists within cards. Interaction: One-click copy buttons for each URL. Justification: Grouping and clear copy actions reduce user effort. Library: Vanilla JS. -->
+    <!-- Application Structure Plan: A multi-tab SPA. Tab 1 (Dashboard) provides at-a-glance stats and primary links from stats.json. Tab 2 (Live Test) allows users to select ANY subscription link (all, country, protocol) and run the client-side WebSocket test on that specific subset. Tab 3 (All Links) provides a clean, categorized library of all subscription URLs. This hybrid model serves both users who want a quick, curated link and those who want to perform detailed, targeted real-time tests. -->
+    <!-- Visualization & Content Choices: 1. Dashboard: Key stats (cards), Country Distribution (Bar Chart from Chart.js), Primary Links (HTML list). Goal: Quick overview and access. 2. Live Tester: Dropdown menu to select config source URL, progress bar, dynamic result cards. Goal: User-driven, real-time performance testing. 3. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,6 +17,7 @@
         body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #cbd5e1; }
         .card { background-color: #0f172a; border: 1px solid #1e293b; }
         .btn-primary { background-color: #0891b2; color: white; }
+        .btn-primary:disabled { background-color: #1e293b; color: #475569; cursor: not-allowed; }
         .btn-secondary { background-color: #334155; color: #e2e8f0; }
         .tab-active { color: #06b6d4; border-color: #06b6d4; }
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
@@ -53,6 +54,7 @@
         <div class="mb-8 flex justify-center border-b border-slate-800">
             <button data-tab="dashboard" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors tab-active">داشبورد</button>
             <button data-tab="all-configs" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لیست کانفیگ‌ها</button>
+            <button data-tab="tester" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">تست زنده</button>
             <button data-tab="links" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لینک‌های اشتراک</button>
         </div>
 
@@ -87,7 +89,7 @@
             <div id="tab-all-configs" class="tab-content hidden">
                 <div class="card p-4 sm:p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">لیست کامل کانفیگ‌ها</h3>
+                        <h3 class="text-xl font-bold text-white">لیست کامل کانفیگ‌ها</h3>
                         <div class="relative w-full sm:w-64">
                             <i class='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
                             <input type="text" id="search-input" placeholder="جستجو بر اساس نام..." class="w-full bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 pl-12 pr-4 outline-none transition-colors">
@@ -119,6 +121,42 @@
                 </div>
             </div>
 
+            <!-- Live Tester Tab -->
+            <div id="tab-tester" class="tab-content hidden">
+                 <section class="card p-6 rounded-2xl mb-8 shadow-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                        <div class="flex items-center justify-center md:justify-start gap-4">
+                            <button id="start-test-btn" class="btn-primary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105" disabled><i class='bx bx-play-circle text-2xl'></i>شروع تست</button>
+                            <button id="stop-test-btn" class="btn-secondary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105 hidden"><i class='bx bx-stop-circle text-2xl'></i>توقف</button>
+                        </div>
+                        <div class="col-span-2">
+                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">کل کانفیگ‌ها</p><p id="total-stat-tester" class="text-2xl font-bold text-white">0</p></div>
+                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">تست شده</p><p id="tested-stat" class="text-2xl font-bold text-cyan-400">0</p></div>
+                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">سالم</p><p id="working-stat" class="text-2xl font-bold text-green-400">0</p></div>
+                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">بهترین پینگ</p><p id="best-ping-stat" class="text-2xl font-bold text-amber-400">N/A</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 w-full bg-slate-700 rounded-full h-2.5"><div id="progress-bar" class="progress-bar-fill h-2.5 rounded-full" style="width: 0%"></div></div>
+                </section>
+                <div class="mb-6 flex flex-col md:flex-row gap-4">
+                    <div class="relative flex-grow">
+                        <select id="sub-select" class="w-full appearance-none bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 px-4 outline-none transition-colors"></select>
+                        <i class='bx bx-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
+                    </div>
+                    <div class="relative w-full md:w-48">
+                         <select id="sort-select" class="w-full appearance-none bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 px-4 outline-none transition-colors">
+                            <option value="ping">مرتب‌سازی: سرعت</option>
+                            <option value="name">مرتب‌سازی: نام</option>
+                        </select>
+                        <i class='bx bx-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
+                    </div>
+                </div>
+                <main id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></main>
+                <div id="initial-message" class="text-center py-20"><i class='bx bx-list-ul text-6xl text-slate-600'></i><p class="mt-4 text-slate-400">یک لیست اشتراک انتخاب کرده و روی "شروع تست" کلیک کنید.</p></div>
+            </div>
+
             <!-- All Links Tab -->
             <div id="tab-links" class="tab-content hidden">
                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -146,18 +184,28 @@
             const REPO_BASE_URL = "https://raw.githubusercontent.com/Ganjabady/XC/main";
             const ALL_CONFIGS_URL = `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`;
             const STATS_URL = `${REPO_BASE_URL}/reports/stats.json`;
+            const MAX_WORKERS = 50;
+            const TEST_TIMEOUT_MS = 5000;
 
             const elements = {
+                startBtn: document.getElementById('start-test-btn'),
+                stopBtn: document.getElementById('stop-test-btn'),
+                resultsGrid: document.getElementById('results-grid'),
+                initialMessage: document.getElementById('initial-message'),
                 searchInput: document.getElementById('search-input'),
-                tableBody: document.getElementById('config-table-body'),
-                loadingSpinner: document.getElementById('loading-spinner'),
-                noResults: document.getElementById('no-results'),
+                sortSelect: document.getElementById('sort-select'),
+                totalStatTester: document.getElementById('total-stat-tester'),
+                testedStat: document.getElementById('tested-stat'),
+                workingStat: document.getElementById('working-stat'),
+                bestPingStat: document.getElementById('best-ping-stat'),
+                progressBar: document.getElementById('progress-bar'),
                 qrModal: document.getElementById('qr-modal'),
                 qrModalContent: document.getElementById('qr-modal-content'),
                 qrcodeContainer: document.getElementById('qrcode'),
                 closeModalBtn: document.getElementById('close-modal-btn'),
                 tabs: document.querySelectorAll('.tab-btn'),
                 tabContents: document.querySelectorAll('.tab-content'),
+                subSelect: document.getElementById('sub-select'),
                 totalConfigsStatDash: document.getElementById('total-configs-stat'),
                 lastUpdateStatDash: document.getElementById('last-update-stat'),
                 countryChartCanvas: document.getElementById('country-chart'),
@@ -165,106 +213,166 @@
                 mainSubsList: document.getElementById('main-subs-list'),
                 protocolSubsList: document.getElementById('protocol-subs-list'),
                 regionSubsList: document.getElementById('region-subs-list'),
+                configTableBody: document.getElementById('config-table-body'),
+                loadingSpinner: document.getElementById('loading-spinner'),
+                noResults: document.getElementById('no-results'),
             };
 
             let allConfigsData = [];
             let countryChart = null;
+            let isTesting = false;
+            let testQueue = [];
 
             function parseConfig(link) {
                 try {
                     if (!link.includes("://")) return null;
                     const url = new URL(link);
-                    const name = decodeURIComponent(url.hash.substring(1)) || url.hostname;
-                    return { link, name, protocol: url.protocol.replace(':', '') };
+                    const host = url.hostname;
+                    const port = url.port || (url.protocol === 'vless:' || url.protocol === 'trojan:' ? '443' : '80');
+                    const name = decodeURIComponent(url.hash.substring(1)) || host;
+                    return { link, name, host, port, protocol: url.protocol.replace(':', '') };
                 } catch (e) { return null; }
             }
 
-            async function loadAllData() {
-                try {
-                    const [configsResponse, statsResponse] = await Promise.all([
-                        fetch(ALL_CONFIGS_URL),
-                        fetch(STATS_URL)
-                    ]);
-                    if (!configsResponse.ok) throw new Error('Failed to fetch configs');
-                    
-                    const configsText = await configsResponse.text();
-                    allConfigsData = configsText.split('\n').filter(Boolean).map((line, index) => ({
-                        id: index + 1,
-                        ...parseConfig(line)
-                    }));
-
-                    if (statsResponse.ok) {
-                        const stats = await statsResponse.json();
-                        updateDashboard(stats);
-                        renderSubscriptionLinks(stats);
-                    }
-
-                    renderTable(allConfigsData);
-
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                    elements.tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
-                } finally {
-                    elements.loadingSpinner.classList.add('hidden');
-                }
-            }
-
-            function renderTable(configs) {
-                elements.tableBody.innerHTML = '';
-                if (configs.length === 0) {
-                    elements.noResults.classList.remove('hidden');
-                    return;
-                }
-                elements.noResults.classList.add('hidden');
-                configs.forEach(config => {
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
-                    const protocol = config.protocol.toUpperCase();
-                    const badgeColor = { VLESS: 'bg-blue-500/20 text-blue-300', VMESS: 'bg-purple-500/20 text-purple-300', TROJAN: 'bg-red-500/20 text-red-300', SS: 'bg-orange-500/20 text-orange-300' }[protocol] || 'bg-slate-500/20 text-slate-300';
-                    row.innerHTML = `
-                        <td class="p-4 font-mono text-slate-500">${config.id.toString().padStart(4, '0')}</td>
-                        <td class="p-4 font-semibold text-white">${config.name}</td>
-                        <td class="p-4 text-center"><span class="px-3 py-1 text-xs font-bold rounded-full ${badgeColor}">${protocol}</span></td>
-                        <td class="p-4 text-center"><div class="flex justify-center items-center gap-1"><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="کپی"><i class='bx bx-copy text-lg'></i></button><button class="qr-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="QR کد"><i class='bx bx-qr text-lg'></i></button></div></td>
-                    `;
-                    elements.tableBody.appendChild(row);
+            async function testLatency(host, port) {
+                return new Promise(resolve => {
+                    try {
+                        const ws = new WebSocket(`wss://${host}:${port}`);
+                        const timeout = setTimeout(() => { ws.close(); resolve(null); }, TEST_TIMEOUT_MS);
+                        const startTime = performance.now();
+                        ws.onopen = () => { clearTimeout(timeout); resolve(Math.round(performance.now() - startTime)); ws.close(); };
+                        ws.onerror = () => { clearTimeout(timeout); resolve(null); };
+                    } catch (e) { resolve(null); }
                 });
             }
 
-            function updateDashboard(stats) {
-                elements.totalConfigsStatDash.textContent = stats.total_configs;
-                elements.lastUpdateStatDash.textContent = new Date(stats.update_time).toLocaleString('fa-IR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-                renderCountryChart(stats.countries);
+            async function worker() {
+                while (isTesting && testQueue.length > 0) {
+                    const config = testQueue.shift();
+                    if (!config) continue;
+                    const latency = await testLatency(config.host, config.port);
+                    if (!isTesting) break;
+                    testedConfigs.push(config);
+                    if (latency !== null) {
+                        config.ping = latency;
+                        renderCard(config);
+                    }
+                    updateStats();
+                }
+            }
+
+            function renderCard(config) {
+                const card = document.createElement('div');
+                card.className = 'config-card card p-4 rounded-xl flex flex-col justify-between transition-all duration-300';
+                card.dataset.name = config.name.toLowerCase();
+                card.dataset.ping = config.ping;
+                const protocol = config.protocol.toUpperCase();
+                const badgeColor = { VLESS: 'bg-blue-500/20 text-blue-300', VMESS: 'bg-purple-500/20 text-purple-300', TROJAN: 'bg-red-500/20 text-red-300', SS: 'bg-orange-500/20 text-orange-300' }[protocol] || 'bg-slate-500/20 text-slate-300';
+                card.innerHTML = `<div><div class="flex justify-between items-start"><p class="font-bold text-white text-sm mb-2 leading-tight">${config.name}</p><span class="px-2 py-0.5 text-xs font-bold rounded-full ${badgeColor}">${protocol}</span></div><p class="text-xs text-slate-400 font-mono">${config.host}</p></div><div class="flex justify-between items-center mt-4"><div class="text-green-400 font-bold text-lg">${config.ping} <span class="text-xs font-normal">ms</span></div><div class="flex items-center gap-1"><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="کپی"><i class='bx bx-copy text-lg'></i></button><button class="qr-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="QR کد"><i class='bx bx-qr text-lg'></i></button></div></div>`;
+                elements.resultsGrid.appendChild(card);
+            }
+
+            function updateStats() {
+                const workingCount = elements.resultsGrid.children.length;
+                elements.workingStat.textContent = workingCount;
+                elements.testedStat.textContent = testedConfigs.length;
+                const progress = allConfigs.length > 0 ? (testedConfigs.length / allConfigs.length) * 100 : 0;
+                elements.progressBar.style.width = `${progress}%`;
+                if (workingCount > 0) {
+                    const pings = Array.from(elements.resultsGrid.children).map(c => parseInt(c.dataset.ping));
+                    elements.bestPingStat.textContent = `${Math.min(...pings)}ms`;
+                } else {
+                    elements.bestPingStat.textContent = 'N/A';
+                }
+            }
+
+            function sortResults() {
+                const sortBy = elements.sortSelect.value;
+                const cards = Array.from(elements.resultsGrid.children);
+                cards.sort((a, b) => (sortBy === 'ping') ? parseInt(a.dataset.ping) - parseInt(b.dataset.ping) : a.dataset.name.localeCompare(b.dataset.name));
+                cards.forEach(card => elements.resultsGrid.appendChild(card));
+            }
+
+            async function startTest() {
+                if (isTesting || !elements.subSelect.value) return;
+                isTesting = true;
+                elements.startBtn.classList.add('hidden');
+                elements.stopBtn.classList.remove('hidden');
+                elements.initialMessage.classList.add('hidden');
+                elements.resultsGrid.innerHTML = '';
+                testedConfigs = [];
+                updateStats();
+                
+                try {
+                    const response = await fetch(elements.subSelect.value);
+                    if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
+                    const text = await response.text();
+                    allConfigs = text.split('\n').map(parseConfig).filter(Boolean);
+                    elements.totalStat.textContent = allConfigs.length;
+                    if (allConfigs.length === 0) throw new Error("Subscription file is empty.");
+                    testQueue = [...allConfigs];
+                    for (let i = 0; i < MAX_WORKERS; i++) { worker(); }
+                } catch (error) {
+                    console.error("Failed to fetch or process subscription:", error);
+                    elements.initialMessage.innerHTML = `<i class='bx bx-error text-6xl text-red-500'></i><p class="mt-4 text-slate-400">خطا در دریافت لیست اشتراک. لطفاً از اتصال خود و معتبر بودن لینک مطمئن شوید.</p>`;
+                    elements.initialMessage.classList.remove('hidden');
+                    stopTest();
+                }
+            }
+
+            function stopTest() {
+                isTesting = false;
+                testQueue = [];
+                elements.startBtn.classList.remove('hidden');
+                elements.stopBtn.classList.add('hidden');
             }
             
             function createSubLinkItem(title, url) {
                 return `<div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/50"><span class="font-semibold">${title}</span><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${url}" title="کپی"><i class='bx bx-copy text-xl'></i></button></div>`;
             }
 
-            function renderSubscriptionLinks(stats) {
-                const mainSubUrl = `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`;
-                const base64SubUrl = `${REPO_BASE_URL}/subscriptions/base64/all_sub.txt`;
-                
-                let mainSubsHtml = createSubLinkItem('لینک کامل', mainSubUrl) + createSubLinkItem('لینک Base64', base64SubUrl);
-                elements.mainSubsListDashboard.innerHTML = mainSubsHtml;
-                elements.mainSubsList.innerHTML = mainSubsHtml;
+            async function populateStaticContent() {
+                try {
+                    const statsResponse = await fetch(STATS_URL);
+                    if (!statsResponse.ok) throw new Error('Failed to fetch stats');
+                    const stats = await statsResponse.json();
 
-                let protocolHtml = '';
-                ['vless', 'vmess', 'trojan', 'ss'].forEach(p => {
-                    const url = `${REPO_BASE_URL}/subscriptions/filtered/subs/${p}.txt`;
-                    protocolHtml += createSubLinkItem(p.toUpperCase(), url);
-                });
-                elements.protocolSubsList.innerHTML = protocolHtml;
+                    elements.totalConfigsStatDash.textContent = stats.total_configs;
+                    elements.lastUpdateStatDash.textContent = new Date(stats.update_time).toLocaleString('fa-IR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                    renderCountryChart(stats.countries);
+                    
+                    const mainSubUrl = `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`;
+                    const base64SubUrl = `${REPO_BASE_URL}/subscriptions/base64/all_sub.txt`;
+                    
+                    let mainSubsHtml = createSubLinkItem('لینک کامل', mainSubUrl) + createSubLinkItem('لینک Base64', base64SubUrl);
+                    elements.mainSubsListDashboard.innerHTML = mainSubsHtml;
+                    elements.mainSubsList.innerHTML = mainSubsHtml;
 
-                let regionHtml = '';
-                const sortedCountries = Object.keys(stats.countries).sort();
-                sortedCountries.forEach(c => {
-                    if (c !== "Unknown") {
-                        const url = `${REPO_BASE_URL}/subscriptions/regions/${c}.txt`;
-                        regionHtml += createSubLinkItem(c, url);
-                    }
-                });
-                elements.regionSubsList.innerHTML = regionHtml;
+                    let protocolHtml = '';
+                    let subSelectOptions = '<option value="" disabled selected>یک لیست برای تست انتخاب کنید</option>';
+                    subSelectOptions += `<option value="${mainSubUrl}">همه کانفیگ‌ها (${stats.total_configs})</option>`;
+
+                    ['vless', 'vmess', 'trojan', 'ss'].forEach(p => {
+                        const url = `${REPO_BASE_URL}/subscriptions/filtered/subs/${p}.txt`;
+                        protocolHtml += createSubLinkItem(p.toUpperCase(), url);
+                        subSelectOptions += `<option value="${url}">فقط ${p.toUpperCase()}</option>`;
+                    });
+                    elements.protocolSubsList.innerHTML = protocolHtml;
+
+                    let regionHtml = '';
+                    const sortedCountries = Object.keys(stats.countries).sort();
+                    sortedCountries.forEach(c => {
+                        if (c !== "Unknown") {
+                            const url = `${REPO_BASE_URL}/subscriptions/regions/${c}.txt`;
+                            regionHtml += createSubLinkItem(c, url);
+                            subSelectOptions += `<option value="${url}">فقط ${c}</option>`;
+                        }
+                    });
+                    elements.regionSubsList.innerHTML = regionHtml;
+                    elements.subSelect.innerHTML = subSelectOptions;
+                } catch (error) {
+                    console.error("Failed to populate static content:", error);
+                }
             }
 
             function renderCountryChart(countries) {
@@ -279,14 +387,19 @@
                 });
             }
 
+            // --- EVENT LISTENERS ---
+            elements.startBtn.addEventListener('click', startTest);
+            elements.stopBtn.addEventListener('click', stopTest);
+            elements.sortSelect.addEventListener('change', sortResults);
+            elements.subSelect.addEventListener('change', () => {
+                elements.startBtn.disabled = !elements.subSelect.value;
+            });
             elements.searchInput.addEventListener('input', () => {
                 const searchTerm = elements.searchInput.value.toLowerCase();
-                Array.from(elements.tableBody.children).forEach(row => {
-                    const name = row.children[1].textContent.toLowerCase();
-                    row.style.display = name.includes(searchTerm) ? '' : 'table-row';
+                Array.from(elements.resultsGrid.children).forEach(card => {
+                    card.style.display = card.dataset.name.includes(searchTerm) ? '' : 'none';
                 });
             });
-
             document.body.addEventListener('click', e => {
                 const copyBtn = e.target.closest('.copy-btn');
                 if (copyBtn) {
@@ -304,13 +417,11 @@
                     setTimeout(() => { elements.qrModal.classList.add('opacity-100'); elements.qrModalContent.classList.remove('scale-95'); }, 10);
                 }
             });
-
             elements.closeModalBtn.addEventListener('click', () => {
                 elements.qrModalContent.classList.add('scale-95');
                 elements.qrModal.classList.remove('opacity-100');
                 setTimeout(() => elements.qrModal.classList.add('hidden'), 300);
             });
-
             elements.tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     elements.tabs.forEach(t => t.classList.remove('tab-active'));
@@ -320,7 +431,9 @@
                 });
             });
 
+            // --- INITIALIZATION ---
             loadAllData();
+            populateSubscriptionDropdown();
         });
     </script>
 </body>
