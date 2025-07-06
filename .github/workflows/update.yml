@@ -2,7 +2,7 @@ name: Update V2Ray Subscriptions
 
 on:
   schedule:
-    - cron: '0 * * * *' # اجرا هر ساعت
+    - cron: '0 */6 * * *' # اجرا هر ۶ ساعت
   workflow_dispatch: # امکان اجرای دستی
 
 jobs:
