@@ -2,8 +2,8 @@ name: Update V2Ray Subscriptions
 
 on:
   schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+    - cron: '0 */6 * * *' # اجرا هر ۶ ساعت
+  workflow_dispatch: # امکان اجرای دستی
 
 jobs:
   update-configs:
@@ -19,6 +19,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      # مرحله جدید: دانلود و آماده‌سازی ابزارها
+      - name: Download and Setup Tools
+        run: |
+          # دانلود آخرین نسخه رسمی v2ray-core
+          echo "Downloading V2Ray-Core..."
+          wget https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
+          unzip v2ray-linux-64.zip -d v2ray_core
+          chmod +x v2ray_core/v2ray
+
+          # دانلود دیتابیس GeoIP
+          echo "Downloading GeoIP Database..."
+          wget https://git.io/GeoLite2-Country.mmdb -O GeoLite2-Country.mmdb
 
       - name: Install dependencies
         run: |
@@ -36,6 +49,7 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           message: '✔️ Update Subscriptions | [UTC] ${{ env.date }}'
-          add: 'subscriptions/*'
+          # تمام فایل‌های جدید را اضافه می‌کنیم
+          add: 'subscriptions/* reports/*'
           author_name: GitHub Actions
           author_email: actions@github.com
