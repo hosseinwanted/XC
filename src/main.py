@@ -4,8 +4,9 @@ import base64
 import requests
 import socket
 import time
+import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote_plus, quote
 from collections import defaultdict
 from pathlib import Path
 import geoip2.database
@@ -18,11 +19,14 @@ def load_settings():
         with open("settings.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"خطا در خواندن settings.json: {e}")
+        print(f"❌ خطا در خواندن settings.json: {e}")
         exit()
 
 SETTINGS = load_settings()
 GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
+# خواندن لیست برندها و اموجی‌ها از تنظیمات
+BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
+EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 
 def setup_directories():
     """پوشه‌های مورد نیاز را ایجاد می‌کند."""
@@ -31,8 +35,8 @@ def setup_directories():
         base_dir,
         os.path.join(base_dir, "v2ray"),
         os.path.join(base_dir, "base64"),
-        os.path.join(base_dir, "filtered", "subs"), # پوشه برای پروتکل‌ها
-        os.path.join(base_dir, "regions") # پوشه برای کشورها
+        os.path.join(base_dir, "filtered", "subs"),
+        os.path.join(base_dir, "regions")
     ]
     for d in dirs_to_create:
         os.makedirs(d, exist_ok=True)
@@ -41,6 +45,7 @@ def get_sources():
     """کانفیگ‌ها را از منابع دریافت می‌کند."""
     all_configs = set()
     sources = SETTINGS.get("sources", {}).get("files", [])
+    print("📥 شروع جمع‌آوری کانفیگ‌ها از منابع...")
     for source_path in sources:
         url = f"https://raw.githubusercontent.com/{source_path}"
         try:
@@ -54,8 +59,9 @@ def get_sources():
             except Exception:
                 all_configs.update(content.splitlines())
         except requests.RequestException as e:
-            print(f"خطا در دریافت منبع {url}: {e}")
+            print(f"⚠️ خطا در دریافت منبع {url}: {e}")
     
+    print(f"✅ مجموعاً {len(all_configs)} کانفیگ از منابع مختلف جمع‌آوری شد.")
     return list(filter(None, all_configs))
 
 class V2RayPingTester:
@@ -85,10 +91,9 @@ class V2RayPingTester:
                 port = 443
             
             start_time = time.time()
-            sock = socket.create_connection((host, port), timeout=self.timeout)
-            ping_ms = int((time.time() - start_time) * 1000)
-            sock.close()
-            return {'config': config, 'ping': ping_ms, 'host': host}
+            with socket.create_connection((host, port), timeout=self.timeout) as sock:
+                ping_ms = int((time.time() - start_time) * 1000)
+                return {'config': config, 'ping': ping_ms, 'host': host}
         except (socket.timeout, ConnectionRefusedError, OSError, socket.gaierror):
             return None
         except Exception:
@@ -105,80 +110,90 @@ class V2RayPingTester:
                 result = future.result()
                 if result:
                     reachable_configs.append(result)
-                print(f"\rتست کانفیگ‌ها: {i+1}/{total} | سالم: {len(reachable_configs)}", end="")
+                print(f"\r🧪 تست کانفیگ‌ها: {i+1}/{total} | ✅ سالم: {len(reachable_configs)}", end="")
 
-        print(f"\nتست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
+        print(f"\n\n✅ تست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
         return sorted(reachable_configs, key=lambda x: x['ping'])
 
-def get_country(ip_address, geo_reader):
-    """کشور را بر اساس آدرس IP تشخیص می‌دهد."""
+def get_country_and_flag(ip_address, geo_reader):
+    """کشور و پرچم را بر اساس آدرس IP تشخیص می‌دهد."""
     if not ip_address or not geo_reader:
-        return "Unknown"
+        return "Unknown", "🌐"
     try:
         response = geo_reader.country(ip_address)
-        return response.country.iso_code
+        country_code = response.country.iso_code
+        if country_code:
+            flag = "".join(chr(ord(c) + 127397) for c in country_code.upper())
+            return country_code, flag
+        return "Unknown", "🌐"
     except (geoip2.errors.AddressNotFoundError, ValueError):
-        return "Unknown"
+        return "Unknown", "🌐"
 
 def main():
     start_time = time.time()
     setup_directories()
 
     unique_configs = get_sources()
-    print(f"تعداد {len(unique_configs)} کانفیگ یکتا برای تست آماده شد.")
+    print(f"🔬 تعداد {len(unique_configs)} کانفیگ یکتا برای تست آماده شد.\n")
 
     tester = V2RayPingTester(unique_configs, timeout=SETTINGS.get("timeout", 5))
     final_results = tester.run()
 
     if final_results:
+        geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
+        
+        by_country = defaultdict(list)
+        by_protocol = defaultdict(list)
+        
+        print("\n🎨 شروع نام‌گذاری و دسته‌بندی...")
+        for i, res in enumerate(final_results, 1):
+            try:
+                ip = socket.gethostbyname(res['host'])
+                country, flag = get_country_and_flag(ip, geo_reader)
+            except socket.gaierror:
+                country, flag = "Unknown", "🌐"
+
+            # --- بخش جدید: انتخاب تصادفی برند و اموجی ---
+            selected_brand = random.choice(BRANDS_LIST)
+            selected_emoji = random.choice(EMOJIS_LIST)
+            
+            new_name = f"{selected_brand} #{i:03d} | {selected_emoji} {flag} {country}"
+            
+            original_link = res['config'].split('#')[0]
+            named_config = f"{original_link}#{quote(new_name)}"
+            
+            res['config'] = named_config
+            by_country[country].append(named_config)
+            
+            proto = named_config.split("://")[0]
+            by_protocol[proto].append(named_config)
+
+        if geo_reader:
+            geo_reader.close()
+        
         base_dir = SETTINGS.get("out_dir", "subscriptions")
         
-        # --- دسته‌بندی بر اساس پروتکل ---
-        by_protocol = defaultdict(list)
-        for res in final_results:
-            proto = res['config'].split("://")[0]
-            by_protocol[proto].append(res['config'])
+        regions_dir = os.path.join(base_dir, "regions")
+        for country, configs in by_country.items():
+            with open(os.path.join(regions_dir, f"{country}.txt"), "w", encoding="utf-8") as f:
+                f.write("\n".join(configs))
         
         filtered_dir = os.path.join(base_dir, "filtered", "subs")
         for protocol, configs in by_protocol.items():
             with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(configs))
-        print("✅ دسته‌بندی بر اساس پروتکل کامل شد.")
-
-        # --- دسته‌بندی بر اساس کشور ---
-        geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
-        by_country = defaultdict(list)
-        if geo_reader:
-            print("شروع دسته‌بندی بر اساس کشور...")
-            for res in final_results:
-                try:
-                    ip = socket.gethostbyname(res['host'])
-                    country = get_country(ip, geo_reader)
-                    by_country[country].append(res['config'])
-                except socket.gaierror:
-                    by_country["Unknown"].append(res['config'])
-            
-            regions_dir = os.path.join(base_dir, "regions")
-            for country, configs in by_country.items():
-                with open(os.path.join(regions_dir, f"{country}.txt"), "w") as f:
-                    f.write("\n".join(configs))
-            print("✅ دسته‌بندی بر اساس کشور کامل شد.")
-            geo_reader.close()
-
-        # --- ذخیره فایل‌های اصلی ---
+        
+        print("💾 ذخیره‌سازی فایل‌ها...")
         all_final_links = [res['config'] for res in final_results]
         v2ray_dir = os.path.join(base_dir, "v2ray")
         base64_dir = os.path.join(base_dir, "base64")
-
-        with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
-            f.write("\n".join(all_final_links))
-        
-        with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f:
-            f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
+        with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write("\n".join(all_final_links))
+        with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
+        print("✅ تمام فایل‌ها با موفقیت ذخیره شدند.")
     else:
-        print("هیچ کانفیگ سالمی پیدا نشد.")
+        print("🔴 هیچ کانفیگ سالمی پیدا نشد.")
 
-    print(f"\nکل فرآیند در {time.time() - start_time:.2f} ثانیه به پایان رسید.")
+    print(f"\n✨ کل فرآیند در {time.time() - start_time:.2f} ثانیه به پایان رسید.")
 
 if __name__ == "__main__":
     main()
