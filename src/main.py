@@ -16,7 +16,6 @@ from bs4 import BeautifulSoup
 # --- بخش تنظیمات ---
 
 def load_settings():
-    """فایل تنظیمات را بارگذاری می‌کند."""
     try:
         with open("settings.json", "r", encoding="utf-8") as f:
             return json.load(f)
@@ -31,7 +30,6 @@ EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 REPORTS_DIR = "reports"
 
 def setup_directories():
-    """پوشه‌های مورد نیاز را ایجاد می‌کند."""
     base_dir = SETTINGS.get("out_dir", "subscriptions")
     dirs_to_create = [
         base_dir,
@@ -45,7 +43,6 @@ def setup_directories():
         os.makedirs(d, exist_ok=True)
 
 def get_sources_from_files():
-    """کانفیگ‌ها را از فایل‌های مخازن گیت‌هاب دریافت می‌کند."""
     all_configs = set()
     sources = SETTINGS.get("sources", {}).get("files", [])
     print("📥 شروع جمع‌آوری کانفیگ‌ها از فایل‌ها...")
@@ -66,7 +63,6 @@ def get_sources_from_files():
     return all_configs
 
 def scrape_telegram_channels():
-    """کانفیگ‌ها را از کانال‌های تلگرام استخراج می‌کند."""
     all_configs = set()
     channels = SETTINGS.get("sources", {}).get("channels", [])
     print("✈️ شروع جمع‌آوری کانفیگ‌ها از کانال‌های تلگرام...")
@@ -84,7 +80,6 @@ def scrape_telegram_channels():
             response = requests.get(url, timeout=30)
             response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
-            
             page_text = soup.get_text()
             for proto, pattern in patterns.items():
                 matches = re.findall(pattern, page_text)
@@ -95,23 +90,19 @@ def scrape_telegram_channels():
     return all_configs
 
 class V2RayPingTester:
-    """تست سریع اتصال برای سنجش در دسترس بودن و پینگ اولیه."""
     def __init__(self, configs, timeout=4):
         self.configs = configs
         self.timeout = timeout
         self.max_threads = 200
 
     def test_single(self, config):
-        """تست اتصال TCP ساده."""
         try:
             if "://" not in config: return None
             uri_part = config.split('://')[1]
             host_part = uri_part.split('#')[0].split('?')[0]
             
-            if '@' in host_part:
-                host_port_str = host_part.split('@')[1]
-            else:
-                host_port_str = host_part
+            if '@' in host_part: host_port_str = host_part.split('@')[1]
+            else: host_port_str = host_part
 
             if ':' in host_port_str:
                 host = host_port_str.rsplit(':', 1)[0].strip("[]")
@@ -124,31 +115,24 @@ class V2RayPingTester:
             with socket.create_connection((host, port), timeout=self.timeout) as sock:
                 ping_ms = int((time.time() - start_time) * 1000)
                 return {'config': config, 'ping': ping_ms, 'host': host}
-        except (socket.timeout, ConnectionRefusedError, OSError, socket.gaierror):
-            return None
         except Exception:
             return None
 
     def run(self):
-        """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
         reachable_configs = []
         with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
             future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
-            
             total = len(future_to_config)
             for i, future in enumerate(as_completed(future_to_config)):
                 result = future.result()
                 if result:
                     reachable_configs.append(result)
                 print(f"\r🧪 تست کانفیگ‌ها: {i+1}/{total} | ✅ سالم: {len(reachable_configs)}", end="")
-
         print(f"\n\n✅ تست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
         return sorted(reachable_configs, key=lambda x: x['ping'])
 
 def get_country_and_flag(ip_address, geo_reader):
-    """کشور و پرچم را بر اساس آدرس IP تشخیص می‌دهد."""
-    if not ip_address or not geo_reader:
-        return "Unknown", "🌐"
+    if not ip_address or not geo_reader: return "Unknown", "🌐"
     try:
         response = geo_reader.country(ip_address)
         country_code = response.country.iso_code
@@ -156,7 +140,7 @@ def get_country_and_flag(ip_address, geo_reader):
             flag = "".join(chr(ord(c) + 127397) for c in country_code.upper())
             return country_code, flag
         return "Unknown", "🌐"
-    except (geoip2.errors.AddressNotFoundError, ValueError):
+    except Exception:
         return "Unknown", "🌐"
 
 def main():
@@ -165,7 +149,6 @@ def main():
 
     file_configs = get_sources_from_files()
     channel_configs = scrape_telegram_channels()
-    
     unique_configs = list(file_configs.union(channel_configs))
     print(f"🔬 تعداد {len(unique_configs)} کانفیگ یکتا برای تست آماده شد.\n")
 
@@ -174,7 +157,6 @@ def main():
 
     if final_results:
         geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
-        
         by_country = defaultdict(list)
         by_protocol = defaultdict(list)
         
@@ -188,8 +170,6 @@ def main():
 
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
-            
-            # فرمت جدید نام‌گذاری
             new_name = f"{flag} {country} #{i:04d} | {selected_brand} {selected_emoji}"
             
             original_link = res['config'].split('#')[0]
@@ -197,31 +177,22 @@ def main():
             
             res['config'] = named_config
             by_country[country].append(named_config)
-            
-            proto = named_config.split("://")[0]
-            by_protocol[proto].append(named_config)
+            by_protocol[named_config.split("://")[0]].append(named_config)
 
-        if geo_reader:
-            geo_reader.close()
+        if geo_reader: geo_reader.close()
         
         base_dir = SETTINGS.get("out_dir", "subscriptions")
         
-        regions_dir = os.path.join(base_dir, "regions")
         for country, configs in by_country.items():
-            with open(os.path.join(regions_dir, f"{country}.txt"), "w", encoding="utf-8") as f:
-                f.write("\n".join(configs))
+            with open(os.path.join(base_dir, "regions", f"{country}.txt"), "w", encoding="utf-8") as f: f.write("\n".join(configs))
         
-        filtered_dir = os.path.join(base_dir, "filtered", "subs")
         for protocol, configs in by_protocol.items():
-            with open(os.path.join(filtered_dir, f"{protocol}.txt"), "w", encoding="utf-8") as f:
-                f.write("\n".join(configs))
+            with open(os.path.join(base_dir, "filtered", "subs", f"{protocol}.txt"), "w", encoding="utf-8") as f: f.write("\n".join(configs))
         
         print("💾 ذخیره‌سازی فایل‌ها...")
         all_final_links = [res['config'] for res in final_results]
-        v2ray_dir = os.path.join(base_dir, "v2ray")
-        base64_dir = os.path.join(base_dir, "base64")
-        with open(os.path.join(v2ray_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write("\n".join(all_final_links))
-        with open(os.path.join(base64_dir, "all_sub.txt"), "w", encoding="utf-8") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
+        with open(os.path.join(base_dir, "v2ray", "all_sub.txt"), "w") as f: f.write("\n".join(all_final_links))
+        with open(os.path.join(base_dir, "base64", "all_sub.txt"), "w") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
         print("✅ تمام فایل‌ها با موفقیت ذخیره شدند.")
 
         report_data = {
@@ -229,10 +200,8 @@ def main():
             "total_configs": len(final_results),
             "countries": {country: len(configs) for country, configs in by_country.items()}
         }
-        with open(os.path.join(REPORTS_DIR, "stats.json"), "w") as f:
-            json.dump(report_data, f, indent=2)
+        with open(os.path.join(REPORTS_DIR, "stats.json"), "w") as f: json.dump(report_data, f, indent=2)
         print("📊 گزارش برای README ساخته شد.")
-
     else:
         print("🔴 هیچ کانفیگ سالمی پیدا نشد.")
 
