@@ -14,7 +14,7 @@ from collections import defaultdict
 V2RAY_CORE_PATH = "v2ray_core/v2ray"
 CONFIG_DIR = "subscriptions"
 TEMP_CONFIG_DIR = "temp_configs"
-MAX_THREADS = 100
+MAX_THREADS = 150
 START_PORT = 10800
 TEST_TIMEOUT = 8
 TEST_URL = "http://www.gstatic.com/generate_204"
@@ -36,10 +36,8 @@ def setup_directories():
     base_dir = SETTINGS.get("out_dir", "subscriptions")
     dirs_to_create = [
         base_dir,
-        os.path.join(base_dir, "v2ray", "subs"),
-        os.path.join(base_dir, "base64", "subs"),
-        os.path.join(base_dir, "filtered", "subs"),
-        os.path.join(base_dir, "warp")
+        os.path.join(base_dir, "v2ray"),
+        os.path.join(base_dir, "base64"),
     ]
     for d in dirs_to_create:
         os.makedirs(d, exist_ok=True)
@@ -56,7 +54,7 @@ def get_sources():
             content = response.text
             try:
                 if len(content) % 4 != 0: content += '=' * (4 - len(content) % 4)
-                decoded_content = base64.b64decode(content).decode('utf-8')
+                decoded_content = base64.b64decode(content).decode('utf-8', errors='ignore')
                 all_configs.update(decoded_content.splitlines())
             except Exception:
                 all_configs.update(content.splitlines())
@@ -66,54 +64,118 @@ def get_sources():
     return list(filter(None, all_configs))
 
 def parse_link(link):
-    """پارس کردن انواع لینک‌ها."""
+    """تجزیه هوشمند انواع لینک‌ها."""
     link = link.strip()
     if link.startswith("vmess://"):
-        return {'type': 'vmess', 'link': link}
+        return parse_vmess(link)
     elif link.startswith("vless://"):
-        return {'type': 'vless', 'link': link}
+        return parse_vless(link)
     elif link.startswith("trojan://"):
-        return {'type': 'trojan', 'link': link}
+        return parse_trojan(link)
     return None
 
+def parse_vmess(link):
+    try:
+        b64_part = link.replace("vmess://", "")
+        if len(b64_part) % 4 != 0:
+            b64_part += '=' * (4 - len(b64_part) % 4)
+        decoded_part = base64.b64decode(b64_part).decode('utf-8')
+        data = json.loads(decoded_part)
+        return {'type': 'vmess', 'data': data, 'original_link': link}
+    except Exception:
+        return None
+
+def parse_vless(link):
+    try:
+        parsed_url = urlparse(link)
+        params = parse_qs(parsed_url.query)
+        data = {
+            'add': parsed_url.hostname,
+            'port': parsed_url.port,
+            'id': parsed_url.username,
+            'ps': unquote(parsed_url.fragment) if parsed_url.fragment else f"vless-{parsed_url.hostname}",
+            'params': params
+        }
+        return {'type': 'vless', 'data': data, 'original_link': link}
+    except Exception:
+        return None
+
+def parse_trojan(link):
+    try:
+        parsed_url = urlparse(link)
+        params = parse_qs(parsed_url.query)
+        data = {
+            'add': parsed_url.hostname,
+            'port': parsed_url.port,
+            'password': unquote(parsed_url.username),
+            'ps': unquote(parsed_url.fragment) if parsed_url.fragment else f"trojan-{parsed_url.hostname}",
+            'params': params
+        }
+        return {'type': 'trojan', 'data': data, 'original_link': link}
+    except Exception:
+        return None
+
 class V2RayTester:
-    """تست یک کانفیگ با استفاده از هسته V2Ray."""
     def __init__(self, config_info, port):
         self.config_info = config_info
         self.port = port
         self.proc = None
         self.config_path = os.path.join(TEMP_CONFIG_DIR, f"config_{port}.json")
 
-    def generate_config(self):
-        """ساخت فایل کانفیگ JSON برای v2ray-core."""
-        link = self.config_info['link']
+    def build_config(self):
+        """ساخت دستی فایل کانفیگ JSON."""
+        protocol = self.config_info['type']
+        data = self.config_info['data']
         
-        # اجرای v2ray برای تبدیل لینک به فرمت JSON
-        try:
-            result = subprocess.run([V2RAY_CORE_PATH, "convert", "-format", "json", link], capture_output=True, text=True, check=True)
-            config = json.loads(result.stdout)
+        config = {
+            "log": {"loglevel": "warning"},
+            "inbounds": [{"port": self.port, "protocol": "socks", "listen": "127.0.0.1", "settings": {"udp": True}}],
+            "outbounds": [{"protocol": protocol, "settings": {}, "streamSettings": {}}]
+        }
+
+        outbound = config['outbounds'][0]
+        outbound_settings = outbound['settings']
+        stream_settings = outbound['streamSettings']
+
+        if protocol == 'vmess':
+            outbound_settings['vnext'] = [{'address': data.get('add'), 'port': int(data.get('port', 0)), 'users': [{'id': data.get('id'), 'alterId': int(data.get('aid', 0)), 'security': data.get('scy', 'auto')}]}]
+            stream_settings['network'] = data.get('net', 'tcp')
+            stream_settings['security'] = data.get('tls', 'none')
+            if data.get('net') == 'ws':
+                stream_settings['wsSettings'] = {'path': data.get('path', '/'), 'headers': {'Host': data.get('host', data.get('add'))}}
+            if data.get('tls') == 'tls':
+                stream_settings['tlsSettings'] = {'serverName': data.get('sni', data.get('host', data.get('add')))}
+        
+        elif protocol in ['vless', 'trojan']:
+            params = data.get('params', {})
+            if protocol == 'vless':
+                outbound_settings['vnext'] = [{'address': data['add'], 'port': int(data['port']), 'users': [{'id': data['id'], 'flow': params.get('flow', [''])[0]}]}]
+            else: # trojan
+                outbound_settings['servers'] = [{'address': data['add'], 'port': int(data['port']), 'password': data['password']}]
+
+            stream_settings['network'] = params.get('type', ['tcp'])[0]
+            stream_settings['security'] = params.get('security', ['none'])[0]
             
-            # تنظیم پورت inbound
-            config['inbounds'] = [{'port': self.port, 'protocol': 'socks', 'listen': '127.0.0.1'}]
-            config['log'] = {'loglevel': 'warning'} # کاهش لاگ‌های اضافی
-            
-            with open(self.config_path, 'w') as f:
-                json.dump(config, f, indent=2)
-            return True
-        except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError) as e:
-            print(f"خطا در ساخت کانفیگ برای لینک {link[:30]}...: {e}")
-            return False
+            if stream_settings['network'] == 'ws':
+                stream_settings['wsSettings'] = {'path': params.get('path', ['/'])[0], 'headers': {'Host': params.get('host', [data['add']])[0]}}
+            if stream_settings['security'] == 'tls':
+                stream_settings['tlsSettings'] = {'serverName': params.get('sni', [data['add']])[0], "allowInsecure": True}
+            elif stream_settings['security'] == 'reality':
+                stream_settings['realitySettings'] = {'publicKey': params.get('pbk', [''])[0], 'shortId': params.get('sid', [''])[0], 'serverName': params.get('sni', [data['add']])[0]}
+        
+        with open(self.config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        return True
 
     def run_test(self):
-        """اجرای تست."""
-        if not self.generate_config():
+        if not self.build_config():
             return None, -1
 
         cmd = [V2RAY_CORE_PATH, "run", "-c", self.config_path]
         
         try:
             self.proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(2)
+            time.sleep(2.5)
 
             if self.proc.poll() is not None:
                 return None, -1
@@ -124,7 +186,7 @@ class V2RayTester:
             
             if response.status_code == 204:
                 latency = int((time.time() - start_req_time) * 1000)
-                return self.config_info['link'], latency
+                return self.config_info['original_link'], latency
         except Exception:
             return None, -1
         finally:
@@ -136,7 +198,6 @@ class V2RayTester:
         return None, -1
 
 def worker(config_queue, result_queue, port):
-    """تابع کارگر برای تست موازی."""
     while not config_queue.empty():
         try:
             config_info = config_queue.get_nowait()
@@ -146,6 +207,8 @@ def worker(config_queue, result_queue, port):
                 result_queue.put({'config': link, 'ping': latency})
         except queue.Empty:
             break
+        except Exception as e:
+            print(f"خطای ناشناخته در ترد {port}: {e}")
 
 def main():
     start_time = time.time()
@@ -161,7 +224,9 @@ def main():
     
     result_q = queue.Queue()
     threads = []
-    for i in range(MAX_THREADS):
+    num_threads = SETTINGS.get("max_threads", 100)
+
+    for i in range(num_threads):
         port = START_PORT + i
         thread = threading.Thread(target=worker, args=(config_q, result_q, port))
         threads.append(thread)
@@ -180,7 +245,6 @@ def main():
     if final_results:
         all_final_links = [res['config'] for res in final_results]
         
-        # ذخیره فایل‌ها
         base_dir = SETTINGS.get("out_dir", "subscriptions")
         v2ray_dir = os.path.join(base_dir, "v2ray")
         base64_dir = os.path.join(base_dir, "base64")
