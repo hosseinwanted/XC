@@ -264,7 +264,6 @@
                 testedConfigs = [];
                 
                 if (allConfigs.length === 0) {
-                    loadingSpinner.classList.remove('hidden');
                     try {
                         const response = await fetch(CONFIGS_URL);
                         if (!response.ok) throw new Error('Network response was not ok');
@@ -277,8 +276,6 @@
                         initialMessage.classList.remove('hidden');
                         stopTest();
                         return;
-                    } finally {
-                        loadingSpinner.classList.add('hidden');
                     }
                 }
                 
