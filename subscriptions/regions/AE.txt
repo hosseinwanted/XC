@@ -1,2 +1,2 @@
-ss://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@94.140.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=1#🇸🇬[openproxylist.com]
-vless://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@94.140.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=1#🇸🇬[openproxylist.com]
+ss://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@94.140.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=1#%40V2XCore%20%23007%20%7C%20%E2%9A%A1%EF%B8%8F%20%F0%9F%87%A6%F0%9F%87%AA%20AE
+vless://d60fc3c5-9f07-4cdb-b81f-70af27936bdc@94.140.0.247:8880?sni=ex.sue.x10.mx&type=ws&host=ex.sue.x10.mx&path=/Telegram🇨🇳&allowInsecure=1#%40V2XCore%20%23212%20%7C%20%E2%9C%A8%20%F0%9F%87%A6%F0%9F%87%AA%20AE
