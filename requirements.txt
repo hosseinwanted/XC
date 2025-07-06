@@ -1,3 +1,4 @@
 requests
 pybase64
 geoip2
+beautifulsoup4
