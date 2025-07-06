@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>V2XCore | داشبورد جامع کانفیگ‌ها</title>
     <!-- Chosen Palette: Midnight Blue & Electric Cyan -->
-    <!-- Application Structure Plan: A multi-tab SPA. Tab 1 (Dashboard) provides at-a-glance stats and primary links from stats.json. Tab 2 (Live Test) allows users to select ANY subscription link (all, country, protocol) and run the client-side WebSocket test on that specific subset. Tab 3 (All Links) provides a clean, categorized library of all subscription URLs. This hybrid model serves both users who want a quick, curated link and those who want to perform detailed, targeted real-time tests. -->
-    <!-- Visualization & Content Choices: 1. Dashboard: Key stats (cards), Country Distribution (Bar Chart from Chart.js), Primary Links (HTML list). Goal: Quick overview and access. 2. Live Tester: Dropdown menu to select config source URL, progress bar, dynamic result cards. Goal: User-driven, real-time performance testing. 3. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
+    <!-- Application Structure Plan: A multi-tab SPA. Tab 1 (Dashboard) provides at-a-glance stats and primary links from stats.json. Tab 2 (All Configs) displays a searchable list of all tested configs. Tab 3 (Live Test) allows users to select ANY subscription link and run the client-side WebSocket test on that specific subset. Tab 4 (All Links) provides a clean, categorized library of all subscription URLs. This hybrid model serves both users who want a quick, curated link and those who want to perform detailed, targeted real-time tests. -->
+    <!-- Visualization & Content Choices: 1. Dashboard: Key stats (cards), Country Distribution (Bar Chart from Chart.js), Primary Links (HTML list). Goal: Quick overview and access. 2. All Configs: A searchable, paginated HTML table for easy browsing. 3. Live Tester: Dropdown menu to select config source URL, progress bar, dynamic result cards. Goal: User-driven, real-time performance testing. 4. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -97,7 +97,7 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right">
-                            <thead class="text-sm text-slate-500 dark:text-slate-400 border-b-2 border-slate-700">
+                            <thead class="text-sm text-slate-500 border-b-2 border-slate-700">
                                 <tr>
                                     <th class="p-4">#</th>
                                     <th class="p-4">نام کانفیگ</th>
@@ -308,7 +308,7 @@
                     if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
                     const text = await response.text();
                     allConfigs = text.split('\n').map(parseConfig).filter(Boolean);
-                    elements.totalStat.textContent = allConfigs.length;
+                    elements.totalStatTester.textContent = allConfigs.length;
                     if (allConfigs.length === 0) throw new Error("Subscription file is empty.");
                     testQueue = [...allConfigs];
                     for (let i = 0; i < MAX_WORKERS; i++) { worker(); }
@@ -337,6 +337,7 @@
                     if (!statsResponse.ok) throw new Error('Failed to fetch stats');
                     const stats = await statsResponse.json();
 
+                    // Dashboard Tab
                     elements.totalConfigsStatDash.textContent = stats.total_configs;
                     elements.lastUpdateStatDash.textContent = new Date(stats.update_time).toLocaleString('fa-IR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
                     renderCountryChart(stats.countries);
@@ -370,8 +371,27 @@
                     });
                     elements.regionSubsList.innerHTML = regionHtml;
                     elements.subSelect.innerHTML = subSelectOptions;
+
                 } catch (error) {
                     console.error("Failed to populate static content:", error);
+                }
+            }
+            
+            async function loadAllConfigsTable() {
+                 try {
+                    const response = await fetch(ALL_CONFIGS_URL);
+                    if (!response.ok) throw new Error('Failed to fetch configs for table');
+                    const configsText = await response.text();
+                    const configs = configsText.split('\n').filter(Boolean).map((line, index) => ({
+                        id: index + 1,
+                        ...parseConfig(line)
+                    }));
+                    renderTable(configs);
+                } catch (error) {
+                    console.error('Error fetching data for table:', error);
+                    elements.tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
+                } finally {
+                    elements.loadingSpinner.classList.add('hidden');
                 }
             }
 
@@ -396,8 +416,9 @@
             });
             elements.searchInput.addEventListener('input', () => {
                 const searchTerm = elements.searchInput.value.toLowerCase();
-                Array.from(elements.resultsGrid.children).forEach(card => {
-                    card.style.display = card.dataset.name.includes(searchTerm) ? '' : 'none';
+                Array.from(elements.configTableBody.children).forEach(row => {
+                    const name = row.children[1].textContent.toLowerCase();
+                    row.style.display = name.includes(searchTerm) ? '' : 'table-row';
                 });
             });
             document.body.addEventListener('click', e => {
@@ -432,8 +453,8 @@
             });
 
             // --- INITIALIZATION ---
-            loadAllData();
-            populateSubscriptionDropdown();
+            populateStaticContent();
+            loadAllConfigsTable();
         });
     </script>
 </body>
