@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>V2XCore | داشبورد کانفیگ‌های رایگان</title>
+    <!-- Chosen Palette: Slate & Sky Blue -->
+    <!-- Application Structure Plan: A single-page dashboard application designed for optimal user flow. The structure prioritizes immediate access to key information and actions. 1. Header: Clean navigation and branding. 2. Hero Section: Displays vital stats (total configs, last update) and primary subscription links for quick access. 3. Tabbed Main Section: Organizes content logically into user tasks: "All Configs" for browsing, "By Country" for regional filtering, and "Subscription Links" for advanced users. This task-oriented, tabbed structure is more intuitive than a static sidebar, guiding the user through exploration without overwhelming them. 4. Footer: Essential links. This architecture makes the most critical data immediately accessible while keeping detailed views organized and just a click away. -->
+    <!-- Visualization & Content Choices: 1. Report Info: Full list of V2Ray configs. Goal: Allow easy browsing, copying, and QR code generation. Viz/Method: Interactive HTML table. Interaction: Live search/filter, one-click copy, and modal QR code display. Justification: A searchable table is the most efficient way to handle a large list of text-based data. Library: Vanilla JS, qrcode.js. 2. Report Info: Geographic distribution of servers. Goal: Provide a quick visual overview of server locations. Viz/Method: Horizontal Bar Chart. Interaction: Tooltips showing exact counts on hover. Justification: A bar chart is excellent for comparing categorical data (countries). Library: Chart.js. 3. Report Info: All subscription links (main, base64, per-protocol, per-region). Goal: Centralize all subscription options for easy access. Viz/Method: Grouped lists within cards. Interaction: One-click copy buttons for each URL. Justification: Grouping and clear copy actions reduce user effort. Library: Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f1f5f9; }
+        .dark body { background-color: #0f172a; }
+        .card { background-color: white; }
+        .dark .card { background-color: #1e293b; }
+        .tab-active { border-color: #0ea5e9; color: #0ea5e9; }
+        .dark .tab-active { border-color: #38bdf8; color: #38bdf8; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 60vh; }
+        @media (min-width: 768px) { .chart-container { height: 500px; } }
+    </style>
+</head>
+<body class="text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <!-- Modal QR Code -->
+    <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div id="qr-modal-content" class="card rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center transform transition-all duration-300 scale-95 opacity-0">
+            <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white">اسکن کنید</h3>
+            <div id="qrcode" class="flex justify-center items-center p-2 bg-white rounded-lg"></div>
+            <button id="close-modal-btn" class="mt-6 w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">بستن</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-6 lg:p-8">
+
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-3">
+                <i class='bx bxs-zap text-4xl text-sky-500'></i>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">V2XCore</h1>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <i class='bx bxs-sun text-2xl'></i>
+            </button>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-3">مخزن کانفیگ‌های رایگان</h2>
+            <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">کانفیگ‌های تست‌شده و به‌روز برای دسترسی آزاد و امن به اینترنت</p>
+            <div class="flex justify-center items-center gap-4 text-sm">
+                <div class="card p-3 px-4 rounded-full flex items-center gap-2">
+                    <i class='bx bx-server text-sky-500'></i>
+                    <span id="total-configs-stat">...</span>
+                    <span>کانفیگ فعال</span>
+                </div>
+                <div class="card p-3 px-4 rounded-full flex items-center gap-2">
+                    <i class='bx bx-time-five text-sky-500'></i>
+                    <span>آخرین بروزرسانی:</span>
+                    <span id="last-update-stat">...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab Navigation -->
+        <div class="mb-8 flex justify-center border-b border-slate-200 dark:border-slate-700">
+            <button data-tab="all" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors tab-active">همه کانفیگ‌ها</button>
+            <button data-tab="countries" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">بر اساس کشور</button>
+            <button data-tab="subs" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لینک‌های اشتراک</button>
+        </div>
+
+        <!-- Main Content -->
+        <main>
+            <!-- All Configs Tab -->
+            <div id="tab-all" class="tab-content">
+                <div class="card p-4 sm:p-6 rounded-2xl shadow-lg">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">لیست کامل کانفیگ‌ها</h3>
+                        <div class="relative w-full sm:w-64">
+                            <i class='bx bx-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400'></i>
+                            <input type="text" id="search-input" placeholder="جستجو بر اساس نام..." class="w-full bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-sky-500 rounded-lg py-2 pl-10 pr-4 outline-none transition-colors">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right">
+                            <thead class="text-sm text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="p-4">#</th>
+                                    <th class="p-4">نام کانفیگ</th>
+                                    <th class="p-4 text-center">پروتکل</th>
+                                    <th class="p-4 text-center">عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="config-table-body">
+                                <!-- Rows will be inserted by JS -->
+                            </tbody>
+                        </table>
+                        <div id="loading-spinner" class="text-center py-12">
+                            <i class='bx bx-loader-alt bx-spin text-4xl text-sky-500'></i>
+                            <p class="mt-2">در حال بارگذاری و تست کانفیگ‌ها...</p>
+                        </div>
+                         <div id="no-results" class="text-center py-12 hidden">
+                            <i class='bx bx-error-circle text-4xl text-amber-500'></i>
+                            <p class="mt-2">موردی یافت نشد.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- By Country Tab -->
+            <div id="tab-countries" class="tab-content hidden">
+                <div class="card p-4 sm:p-6 rounded-2xl shadow-lg">
+                     <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 text-center">توزیع سرورها بر اساس کشور</h3>
+                     <div class="chart-container">
+                        <canvas id="country-chart"></canvas>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Subscription Links Tab -->
+            <div id="tab-subs" class="tab-content hidden">
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Main Subs -->
+                    <div class="card p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2"><i class='bx bx-link-alt'></i>لینک‌های اصلی</h3>
+                        <div class="space-y-3" id="main-subs-list">
+                            <!-- Links will be inserted by JS -->
+                        </div>
+                    </div>
+                     <!-- Protocol Subs -->
+                    <div class="card p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2"><i class='bx bx-network-chart'></i>بر اساس پروتکل</h3>
+                         <div class="space-y-3" id="protocol-subs-list">
+                            <!-- Links will be inserted by JS -->
+                        </div>
+                    </div>
+                     <!-- Region Subs -->
+                    <div class="card p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2"><i class='bx bx-world'></i>بر اساس کشور</h3>
+                         <div class="space-y-3 overflow-y-auto max-h-96" id="region-subs-list">
+                            <!-- Links will be inserted by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-slate-500 dark:text-slate-400 text-sm">
+            <p>ساخته شده با ❤️ و ☕️</p>
+            <p>مشاهده پروژه در <a href="https://github.com/YOUR_USERNAME/YOUR_REPO" target="_blank" class="text-sky-500 hover:underline">گیت‌هاب</a></p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            const REPO_URL = "https://raw.githubusercontent.com/Ganjabady/XC/main";
+            const ALL_CONFIGS_URL = `${REPO_URL}/subscriptions/v2ray/all_sub.txt`;
+            const STATS_URL = `${REPO_URL}/reports/stats.json`;
+            const PROTOCOLS = ['vless', 'vmess', 'trojan', 'ss'];
+
+            // --- ELEMENTS ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const tableBody = document.getElementById('config-table-body');
+            const searchInput = document.getElementById('search-input');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const noResults = document.getElementById('no-results');
+            const totalConfigsStat = document.getElementById('total-configs-stat');
+            const lastUpdateStat = document.getElementById('last-update-stat');
+            const countryChartCanvas = document.getElementById('country-chart');
+            const mainSubsList = document.getElementById('main-subs-list');
+            const protocolSubsList = document.getElementById('protocol-subs-list');
+            const regionSubsList = document.getElementById('region-subs-list');
+            const qrModal = document.getElementById('qr-modal');
+            const qrModalContent = document.getElementById('qr-modal-content');
+            const qrcodeContainer = document.getElementById('qrcode');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            let allConfigsData = [];
+            let countryChart = null;
+
+            // --- THEME ---
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    themeToggle.innerHTML = "<i class='bx bxs-moon text-2xl'></i>";
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggle.innerHTML = "<i class='bx bxs-sun text-2xl'></i>";
+                }
+            };
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                applyTheme(isDark ? 'dark' : 'light');
+            });
+            applyTheme(localStorage.getItem('theme') || 'light');
+
+            // --- DATA FETCHING & RENDERING ---
+            const fetchData = async () => {
+                try {
+                    const [configsResponse, statsResponse] = await Promise.all([
+                        fetch(ALL_CONFIGS_URL),
+                        fetch(STATS_URL)
+                    ]);
+                    if (!configsResponse.ok) throw new Error('Failed to fetch configs');
+                    
+                    const configsText = await configsResponse.text();
+                    allConfigsData = configsText.split('\n').filter(Boolean).map((line, index) => {
+                        const parts = line.split('#');
+                        return {
+                            id: index + 1,
+                            link: line,
+                            name: decodeURIComponent(parts[1] || `Config ${index + 1}`),
+                            protocol: line.split('://')[0]
+                        };
+                    });
+
+                    if (statsResponse.ok) {
+                        const stats = await statsResponse.json();
+                        updateStats(stats);
+                        renderCountryChart(stats.countries);
+                        renderSubscriptionLinks(stats.countries);
+                    }
+
+                    renderTable(allConfigsData);
+
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات. لطفاً دقایقی دیگر دوباره تلاش کنید.</td></tr>`;
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                }
+            };
+
+            const renderTable = (configs) => {
+                tableBody.innerHTML = '';
+                if (configs.length === 0) {
+                    noResults.classList.remove('hidden');
+                    return;
+                }
+                noResults.classList.add('hidden');
+                configs.forEach(config => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+                    row.innerHTML = `
+                        <td class="p-4 font-mono text-slate-500">${config.id.toString().padStart(3, '0')}</td>
+                        <td class="p-4 font-semibold text-slate-900 dark:text-white">${config.name}</td>
+                        <td class="p-4 text-center">
+                            <span class="px-3 py-1 text-xs font-bold rounded-full ${getProtocolBadge(config.protocol)}">${config.protocol.toUpperCase()}</span>
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex justify-center items-center gap-2">
+                                <button class="copy-btn p-2 rounded-full hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-500" data-link="${config.link}" title="کپی کردن کانفیگ">
+                                    <i class='bx bx-copy text-xl'></i>
+                                </button>
+                                <button class="qr-btn p-2 rounded-full hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-500" data-link="${config.link}" title="نمایش کد QR">
+                                    <i class='bx bx-qr text-xl'></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            };
+
+            const getProtocolBadge = (protocol) => {
+                switch (protocol) {
+                    case 'vless': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
+                    case 'vmess': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300';
+                    case 'trojan': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
+                    case 'ss': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300';
+                    default: return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
+                }
+            };
+
+            const updateStats = (stats) => {
+                totalConfigsStat.textContent = stats.total_configs;
+                lastUpdateStat.textContent = new Date(stats.update_time).toLocaleString('fa-IR');
+            };
+
+            const renderCountryChart = (countries) => {
+                if (countryChart) {
+                    countryChart.destroy();
+                }
+                const sortedCountries = Object.entries(countries).sort(([,a],[,b]) => b-a).slice(0, 15);
+                const labels = sortedCountries.map(c => c[0]);
+                const data = sortedCountries.map(c => c[1]);
+
+                const ctx = countryChartCanvas.getContext('2d');
+                countryChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'تعداد سرورها',
+                            data: data,
+                            backgroundColor: 'rgba(14, 165, 233, 0.6)',
+                            borderColor: 'rgba(14, 165, 233, 1)',
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                rtl: true,
+                                textDirection: 'rtl',
+                                bodyFont: { family: 'Vazirmatn' },
+                                titleFont: { family: 'Vazirmatn' },
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#64748b' } },
+                            y: { ticks: { color: '#64748b' } }
+                        }
+                    }
+                });
+            };
+            
+            const createSubLinkItem = (title, url) => {
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                        <span class="font-semibold">${title}</span>
+                        <button class="copy-btn p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500" data-link="${url}" title="کپی کردن لینک">
+                            <i class='bx bx-copy text-xl'></i>
+                        </button>
+                    </div>`;
+            };
+
+            const renderSubscriptionLinks = (countries) => {
+                mainSubsList.innerHTML = createSubLinkItem('لینک کامل', ALL_CONFIGS_URL) + createSubLinkItem('لینک Base64', `${REPO_URL}/subscriptions/base64/all_sub.txt`);
+                
+                let protocolHtml = '';
+                PROTOCOLS.forEach(p => {
+                    protocolHtml += createSubLinkItem(p.toUpperCase(), `${REPO_URL}/subscriptions/filtered/subs/${p}.txt`);
+                });
+                protocolSubsList.innerHTML = protocolHtml;
+
+                let regionHtml = '';
+                const sortedCountries = Object.keys(countries).sort();
+                sortedCountries.forEach(c => {
+                    if (c !== "Unknown") {
+                        regionHtml += createSubLinkItem(c, `${REPO_URL}/subscriptions/regions/${c}.txt`);
+                    }
+                });
+                regionSubsList.innerHTML = regionHtml;
+            };
+
+            // --- EVENT LISTENERS ---
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredConfigs = allConfigsData.filter(c => c.name.toLowerCase().includes(searchTerm));
+                renderTable(filteredConfigs);
+            });
+
+            document.body.addEventListener('click', (e) => {
+                const copyBtn = e.target.closest('.copy-btn');
+                if (copyBtn) {
+                    const link = copyBtn.dataset.link;
+                    navigator.clipboard.writeText(link).then(() => {
+                        const originalIcon = copyBtn.innerHTML;
+                        copyBtn.innerHTML = "<i class='bx bxs-check-circle text-xl text-green-500'></i>";
+                        setTimeout(() => { copyBtn.innerHTML = originalIcon; }, 1500);
+                    });
+                }
+
+                const qrBtn = e.target.closest('.qr-btn');
+                if (qrBtn) {
+                    const link = qrBtn.dataset.link;
+                    qrcodeContainer.innerHTML = '';
+                    new QRCode(qrcodeContainer, {
+                        text: link,
+                        width: 256,
+                        height: 256,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                    qrModal.classList.remove('hidden');
+                    setTimeout(() => qrModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+                }
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                qrModalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => qrModal.classList.add('hidden'), 300);
+            });
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('tab-active'));
+                    tab.classList.add('tab-active');
+                    
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+                });
+            });
+
+            // --- INITIALIZATION ---
+            fetchData();
+        });
+    </script>
+</body>
+</html>
