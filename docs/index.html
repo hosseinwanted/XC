@@ -6,7 +6,7 @@
     <title>V2XCore | داشبورد جامع کانفیگ‌ها</title>
     <!-- Chosen Palette: Midnight Blue & Electric Cyan -->
     <!-- Application Structure Plan: A multi-tab SPA. Tab 1 (Dashboard) provides at-a-glance stats and primary links from stats.json. Tab 2 (All Configs) displays a searchable and PAGINATED list of all tested configs. Tab 3 (Live Test) allows users to select ANY subscription link and run the client-side WebSocket test on that specific subset. Tab 4 (All Links) provides a clean, categorized library of all subscription URLs. This hybrid model serves both users who want a quick, curated link and those who want to perform detailed, targeted real-time tests. -->
-    <!-- Visualization & Content Choices: 1. Dashboard: Key stats, Country Chart, Primary Links. Goal: Quick overview. 2. All Configs: A searchable, paginated HTML table. Goal: Fast initial load and easy browsing. Interaction: Search, Pagination. 3. Live Tester: Dropdown menu, progress bar, dynamic result cards. Goal: User-driven performance testing. 4. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
+    <!-- Visualization & Content Choices: 1. Dashboard: Key stats, Country Chart, Primary Links. Goal: Quick overview. 2. All Configs: A searchable, paginated HTML table with ping data. Goal: Fast initial load and easy browsing. Interaction: Search, Pagination, Sorting. 3. Live Tester: Dropdown menu, progress bar, dynamic result cards using robust WebSocket test. Goal: User-driven performance testing. 4. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -89,7 +89,7 @@
             <div id="tab-all-configs" class="tab-content hidden">
                 <div class="card p-4 sm:p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        <h3 class="text-xl font-bold text-white">لیست کامل کانفیگ‌ها</h3>
+                        <h3 class="text-xl font-bold text-white">لیست کامل کانفیگ‌ها (تست شده در سرور)</h3>
                         <div class="relative w-full sm:w-64">
                             <i class='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
                             <input type="text" id="search-input-table" placeholder="جستجو بر اساس نام..." class="w-full bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 pl-12 pr-4 outline-none transition-colors">
@@ -102,23 +102,15 @@
                                     <th class="p-4">#</th>
                                     <th class="p-4">نام کانفیگ</th>
                                     <th class="p-4 text-center">پروتکل</th>
+                                    <th class="p-4 text-center">پینگ سرور</th>
                                     <th class="p-4 text-center">عملیات</th>
                                 </tr>
                             </thead>
-                            <tbody id="config-table-body">
-                                <!-- Rows will be inserted by JS -->
-                            </tbody>
+                            <tbody id="config-table-body"></tbody>
                         </table>
-                        <div id="loading-spinner" class="text-center py-12">
-                            <i class='bx bx-loader-alt bx-spin text-4xl text-sky-500'></i>
-                            <p class="mt-2">در حال بارگذاری کانفیگ‌ها...</p>
-                        </div>
-                         <div id="no-results" class="text-center py-12 hidden">
-                            <i class='bx bx-error-circle text-4xl text-amber-500'></i>
-                            <p class="mt-2">موردی یافت نشد.</p>
-                        </div>
+                        <div id="loading-spinner" class="text-center py-12"><i class='bx bx-loader-alt bx-spin text-4xl text-sky-500'></i><p class="mt-2">در حال بارگذاری کانفیگ‌ها...</p></div>
+                        <div id="no-results" class="text-center py-12 hidden"><i class='bx bx-error-circle text-4xl text-amber-500'></i><p class="mt-2">موردی یافت نشد.</p></div>
                     </div>
-                    <!-- Pagination Controls -->
                     <div id="pagination-controls" class="flex justify-center items-center gap-4 mt-6"></div>
                 </div>
             </div>
@@ -177,7 +169,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const REPO_BASE_URL = "https://raw.githubusercontent.com/Ganjabady/XC/main";
-            const ALL_CONFIGS_URL = `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`;
             const STATS_URL = `${REPO_BASE_URL}/reports/stats.json`;
             const MAX_WORKERS = 50;
             const TEST_TIMEOUT_MS = 5000;
@@ -377,12 +368,13 @@
             
             async function loadAllConfigsTable() {
                  try {
-                    const response = await fetch(ALL_CONFIGS_URL);
-                    if (!response.ok) throw new Error('Failed to fetch configs for table');
-                    const configsText = await response.text();
-                    allConfigsData = configsText.split('\n').filter(Boolean).map((line, index) => ({
+                    const response = await fetch(STATS_URL);
+                    if (!response.ok) throw new Error('Failed to fetch stats for table');
+                    const stats = await response.json();
+                    allConfigsData = stats.configs.map((config, index) => ({
                         id: index + 1,
-                        ...parseConfig(line)
+                        ...parseConfig(config.link),
+                        ping: config.ping
                     }));
                     displayedConfigs = [...allConfigsData];
                     renderTablePage(1);
@@ -401,15 +393,16 @@
                 const end = start + CONFIGS_PER_PAGE;
                 const pageConfigs = displayedConfigs.slice(start, end);
                 
-                pageConfigs.forEach((config, index) => {
+                pageConfigs.forEach((config) => {
                     const row = document.createElement('tr');
                     row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
                     const protocol = config.protocol.toUpperCase();
                     const badgeColor = { VLESS: 'bg-blue-500/20 text-blue-300', VMESS: 'bg-purple-500/20 text-purple-300', TROJAN: 'bg-red-500/20 text-red-300', SS: 'bg-orange-500/20 text-orange-300' }[protocol] || 'bg-slate-500/20 text-slate-300';
                     row.innerHTML = `
-                        <td class="p-4 font-mono text-slate-500">${start + index + 1}</td>
+                        <td class="p-4 font-mono text-slate-500">${config.id}</td>
                         <td class="p-4 font-semibold text-white">${config.name}</td>
                         <td class="p-4 text-center"><span class="px-3 py-1 text-xs font-bold rounded-full ${badgeColor}">${protocol}</span></td>
+                        <td class="p-4 text-center text-green-400 font-semibold">${config.ping} ms</td>
                         <td class="p-4 text-center"><div class="flex justify-center items-center gap-1"><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="کپی"><i class='bx bx-copy text-lg'></i></button><button class="qr-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="QR کد"><i class='bx bx-qr text-lg'></i></button></div></td>
                     `;
                     elements.configTableBody.appendChild(row);
@@ -456,7 +449,6 @@
             // --- EVENT LISTENERS ---
             elements.startBtn.addEventListener('click', startTest);
             elements.stopBtn.addEventListener('click', stopTest);
-            elements.sortSelect.addEventListener('change', sortResults);
             elements.subSelect.addEventListener('change', () => {
                 elements.startBtn.disabled = !elements.subSelect.value;
             });
