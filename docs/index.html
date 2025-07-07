@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>V2XCore | داشبورد جامع کانفیگ‌ها</title>
+    <!-- Chosen Palette: Midnight Blue & Electric Cyan -->
+    <!-- Application Structure Plan: A multi-tab SPA. Tab 1 (Dashboard) provides at-a-glance stats and primary links from stats.json. Tab 2 (All Configs) displays a searchable and PAGINATED list of all tested configs. Tab 3 (Live Test) allows users to select ANY subscription link and run the client-side WebSocket test on that specific subset. Tab 4 (All Links) provides a clean, categorized library of all subscription URLs. This hybrid model serves both users who want a quick, curated link and those who want to perform detailed, targeted real-time tests. -->
+    <!-- Visualization & Content Choices: 1. Dashboard: Key stats, Country Chart, Primary Links. Goal: Quick overview. 2. All Configs: A searchable, paginated HTML table. Goal: Fast initial load and easy browsing. Interaction: Search, Pagination. 3. Live Tester: Dropdown menu, progress bar, dynamic result cards. Goal: User-driven performance testing. 4. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -23,6 +27,7 @@
 </head>
 <body class="antialiased">
 
+    <!-- Modal QR Code -->
     <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden transition-opacity duration-300 opacity-0">
         <div id="qr-modal-content" class="card rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center transform transition-all duration-300 scale-95">
             <h3 class="text-xl font-bold mb-4 text-white">اسکن کنید</h3>
@@ -31,8 +36,10 @@
         </div>
     </div>
 
+    <!-- Main Container -->
     <div class="container mx-auto p-4 md:p-6">
 
+        <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div class="flex items-center gap-3">
                 <i class='bx bxs-zap text-4xl text-cyan-400'></i>
@@ -43,6 +50,7 @@
             </a>
         </header>
 
+        <!-- Tab Navigation -->
         <div class="mb-8 flex justify-center border-b border-slate-800">
             <button data-tab="dashboard" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors tab-active">داشبورد</button>
             <button data-tab="all-configs" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لیست کانفیگ‌ها</button>
@@ -50,7 +58,9 @@
             <button data-tab="links" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لینک‌های اشتراک</button>
         </div>
 
+        <!-- Main Content -->
         <main>
+            <!-- Dashboard Tab -->
             <div id="tab-dashboard" class="tab-content">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 card p-6 rounded-2xl shadow-lg">
@@ -75,6 +85,7 @@
                 </div>
             </div>
 
+            <!-- All Configs Tab -->
             <div id="tab-all-configs" class="tab-content hidden">
                 <div class="card p-4 sm:p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -95,21 +106,24 @@
                                 </tr>
                             </thead>
                             <tbody id="config-table-body">
-                                </tbody>
+                                <!-- Rows will be inserted by JS -->
+                            </tbody>
                         </table>
                         <div id="loading-spinner" class="text-center py-12">
                             <i class='bx bx-loader-alt bx-spin text-4xl text-sky-500'></i>
                             <p class="mt-2">در حال بارگذاری کانفیگ‌ها...</p>
                         </div>
-                        <div id="no-results" class="text-center py-12 hidden">
+                         <div id="no-results" class="text-center py-12 hidden">
                             <i class='bx bx-error-circle text-4xl text-amber-500'></i>
                             <p class="mt-2">موردی یافت نشد.</p>
                         </div>
                     </div>
+                    <!-- Pagination Controls -->
                     <div id="pagination-controls" class="flex justify-center items-center gap-4 mt-6"></div>
                 </div>
             </div>
             
+            <!-- Live Tester Tab -->
             <div id="tab-tester" class="tab-content hidden">
                  <section class="card p-6 rounded-2xl mb-8 shadow-lg">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -138,6 +152,7 @@
                 <div id="initial-message" class="text-center py-20"><i class='bx bx-list-ul text-6xl text-slate-600'></i><p class="mt-4 text-slate-400">یک لیست اشتراک انتخاب کرده و روی "شروع تست" کلیک کنید.</p></div>
             </div>
 
+            <!-- All Links Tab -->
             <div id="tab-links" class="tab-content hidden">
                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="card p-6 rounded-2xl shadow-lg">
@@ -199,7 +214,7 @@
                 paginationControls: document.getElementById('pagination-controls'),
             };
 
-            let allConfigs = [];
+            let allConfigsData = [];
             let displayedConfigs = [];
             let countryChart = null;
             let isTesting = false;
@@ -217,7 +232,7 @@
                     return { link, name, host, port, protocol: url.protocol.replace(':', '') };
                 } catch (e) { return null; }
             }
-
+            
             async function testLatency(host, port) {
                 return new Promise(resolve => {
                     try {
@@ -285,6 +300,7 @@
                 elements.initialMessage.classList.add('hidden');
                 elements.resultsGrid.innerHTML = '';
                 testedConfigs = [];
+                updateStats();
                 
                 try {
                     const response = await fetch(elements.subSelect.value);
@@ -294,7 +310,6 @@
                     elements.totalStatTester.textContent = allConfigs.length;
                     if (allConfigs.length === 0) throw new Error("Subscription file is empty.");
                     testQueue = [...allConfigs];
-                    updateStats();
                     for (let i = 0; i < MAX_WORKERS; i++) { worker(); }
                 } catch (error) {
                     console.error("Failed to fetch or process subscription:", error);
@@ -360,6 +375,25 @@
                 }
             }
             
+            async function loadAllConfigsTable() {
+                 try {
+                    const response = await fetch(ALL_CONFIGS_URL);
+                    if (!response.ok) throw new Error('Failed to fetch configs for table');
+                    const configsText = await response.text();
+                    allConfigsData = configsText.split('\n').filter(Boolean).map((line, index) => ({
+                        id: index + 1,
+                        ...parseConfig(line)
+                    }));
+                    displayedConfigs = [...allConfigsData];
+                    renderTablePage(1);
+                } catch (error) {
+                    console.error('Error fetching data for table:', error);
+                    elements.configTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
+                } finally {
+                    elements.loadingSpinner.classList.add('hidden');
+                }
+            }
+
             function renderTablePage(page) {
                 currentPage = page;
                 elements.configTableBody.innerHTML = '';
@@ -406,25 +440,6 @@
                 
                 elements.paginationControls.append(prevBtn, pageInfo, nextBtn);
             }
-            
-            async function loadAllConfigsTable() {
-                 try {
-                    const response = await fetch(ALL_CONFIGS_URL);
-                    if (!response.ok) throw new Error('Failed to fetch configs for table');
-                    const configsText = await response.text();
-                    allConfigsData = configsText.split('\n').filter(Boolean).map((line, index) => ({
-                        id: index + 1,
-                        ...parseConfig(line)
-                    }));
-                    displayedConfigs = [...allConfigsData];
-                    renderTablePage(1);
-                } catch (error) {
-                    console.error('Error fetching data for table:', error);
-                    elements.configTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
-                } finally {
-                    elements.loadingSpinner.classList.add('hidden');
-                }
-            }
 
             function renderCountryChart(countries) {
                 if (countryChart) countryChart.destroy();
@@ -441,7 +456,10 @@
             // --- EVENT LISTENERS ---
             elements.startBtn.addEventListener('click', startTest);
             elements.stopBtn.addEventListener('click', stopTest);
-            elements.subSelect.addEventListener('change', () => { elements.startBtn.disabled = !elements.subSelect.value; });
+            elements.sortSelect.addEventListener('change', sortResults);
+            elements.subSelect.addEventListener('change', () => {
+                elements.startBtn.disabled = !elements.subSelect.value;
+            });
             elements.searchInputTable.addEventListener('input', () => {
                 const searchTerm = elements.searchInputTable.value.toLowerCase();
                 displayedConfigs = allConfigsData.filter(c => c.name.toLowerCase().includes(searchTerm));
@@ -454,7 +472,6 @@
                     renderTablePage(1);
                 }
             });
-
             document.body.addEventListener('click', e => {
                 const copyBtn = e.target.closest('.copy-btn');
                 if (copyBtn) {
