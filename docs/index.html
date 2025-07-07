@@ -145,6 +145,13 @@
                         <select id="sub-select" class="w-full appearance-none bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 px-4 outline-none transition-colors"></select>
                         <i class='bx bx-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
                     </div>
+                    <div class="relative w-full md:w-48">
+                         <select id="sort-select" class="w-full appearance-none bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 px-4 outline-none transition-colors">
+                            <option value="ping">مرتب‌سازی: سرعت</option>
+                            <option value="name">مرتب‌سازی: نام</option>
+                        </select>
+                        <i class='bx bx-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
+                    </div>
                 </div>
                 <main id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></main>
                 <div id="initial-message" class="text-center py-20"><i class='bx bx-list-ul text-6xl text-slate-600'></i><p class="mt-4 text-slate-400">یک لیست اشتراک انتخاب کرده و روی "شروع تست" کلیک کنید.</p></div>
@@ -186,6 +193,7 @@
                 resultsGrid: document.getElementById('results-grid'),
                 initialMessage: document.getElementById('initial-message'),
                 searchInputTable: document.getElementById('search-input-table'),
+                sortSelect: document.getElementById('sort-select'),
                 totalStatTester: document.getElementById('total-stat-tester'),
                 testedStat: document.getElementById('tested-stat'),
                 workingStat: document.getElementById('working-stat'),
@@ -276,6 +284,13 @@
                 } else {
                     elements.bestPingStat.textContent = 'N/A';
                 }
+            }
+
+            function sortResults() {
+                const sortBy = elements.sortSelect.value;
+                const cards = Array.from(elements.resultsGrid.children);
+                cards.sort((a, b) => (sortBy === 'ping') ? parseInt(a.dataset.ping) - parseInt(b.dataset.ping) : a.dataset.name.localeCompare(b.dataset.name));
+                cards.forEach(card => elements.resultsGrid.appendChild(card));
             }
 
             async function startTest() {
