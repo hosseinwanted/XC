@@ -2,3 +2,7 @@ requests
 pybase64
 geoip2
 beautifulsoup4
+python-telegram-bot
+qrcode
+Pillow
+jdatetime
