@@ -1,3 +1,3 @@
-trojan://opentunnel.net-oqtxymz6gjl3@nlt-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2315141%20%7C%20%40V2XCore%20%F0%9F%92%8E
-trojan://opentunnel.net-wd3dzt4j9yoy@cat-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2315548%20%7C%20%40V2XCore%20%F0%9F%94%B0
-trojan://opentunnel.net-rw8uuv207taq@ukt-2.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2315800%20%7C%20t.me/V2XCore%20%F0%9F%8E%AF
+trojan://opentunnel.net-rw8uuv207taq@ukt-2.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2315173%20%7C%20t.me/V2XCore%20%F0%9F%94%B0
+trojan://opentunnel.net-oqtxymz6gjl3@nlt-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2315655%20%7C%20t.me/V2XCore%20%E2%9A%9C%EF%B8%8F
+trojan://opentunnel.net-wd3dzt4j9yoy@cat-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2316104%20%7C%20t.me/V2XCore%20%F0%9F%9A%80
