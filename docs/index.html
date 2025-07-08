@@ -380,7 +380,7 @@
                     renderTablePage(1);
                 } catch (error) {
                     console.error('Error fetching data for table:', error);
-                    elements.configTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
+                    elements.configTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
                 } finally {
                     elements.loadingSpinner.classList.add('hidden');
                 }
