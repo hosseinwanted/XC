@@ -26,10 +26,17 @@ def load_settings():
 
 SETTINGS = load_settings()
 GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
-# خواندن لیست برندها و اموجی‌ها از تنظیمات
 BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
 EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 REPORTS_DIR = "reports"
+
+# دیکشنری برای ترجمه کد کشور به نام فارسی
+COUNTRY_NAMES = {
+    "US": "ایالات متحده", "DE": "آلمان", "FR": "فرانسه", "NL": "هلند",
+    "GB": "بریتانیا", "CA": "کانادا", "JP": "ژاپن", "SG": "سنگاپور",
+    "IR": "ایران", "RU": "روسیه", "TR": "ترکیه", "AE": "امارات",
+    # ... می‌توانید این لیست را کامل‌تر کنید
+}
 
 def setup_directories():
     """پوشه‌های مورد نیاز را ایجاد می‌کند."""
@@ -147,16 +154,17 @@ class V2RayPingTester:
 def get_country_and_flag(ip_address, geo_reader):
     """کشور و پرچم را بر اساس آدرس IP تشخیص می‌دهد."""
     if not ip_address or not geo_reader:
-        return "Unknown", "🌐"
+        return "Unknown", "Unknown", "🌐"
     try:
         response = geo_reader.country(ip_address)
         country_code = response.country.iso_code
+        country_name = COUNTRY_NAMES.get(country_code, country_code) # ترجمه به فارسی
         if country_code:
             flag = "".join(chr(ord(c) + 127397) for c in country_code.upper())
-            return country_code, flag
-        return "Unknown", "🌐"
+            return country_code, country_name, flag
+        return "Unknown", "Unknown", "🌐"
     except Exception:
-        return "Unknown", "🌐"
+        return "Unknown", "Unknown", "🌐"
 
 def main():
     start_time = time.time()
@@ -181,23 +189,23 @@ def main():
         for i, res in enumerate(final_results, 1):
             try:
                 ip = socket.gethostbyname(res['host'])
-                country, flag = get_country_and_flag(ip, geo_reader)
+                country_code, country_name, flag = get_country_and_flag(ip, geo_reader)
             except socket.gaierror:
-                country, flag = "Unknown", "🌐"
+                country_code, country_name, flag = "Unknown", "Unknown", "🌐"
 
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
-            new_name = f"{flag} {country} #{i:04d} | {selected_brand} {selected_emoji}"
+            new_name = f"{flag} {country_name} #{i:04d} | {selected_brand} {selected_emoji}"
             
             original_link = res['config'].split('#')[0]
             named_config = f"{original_link}#{quote(new_name)}"
             
-            # ذخیره نتیجه نام‌گذاری شده برای استفاده‌های بعدی
             res['named_config'] = named_config
-            res['country'] = country
+            res['country_code'] = country_code
+            res['country_name'] = country_name
             named_results.append(res)
             
-            by_country[country].append(named_config)
+            by_country[country_code].append(named_config)
             by_protocol[named_config.split("://")[0]].append(named_config)
 
         if geo_reader: geo_reader.close()
@@ -216,14 +224,13 @@ def main():
         with open(os.path.join(base_dir, "base64", "all_sub.txt"), "w") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
         print("✅ تمام فایل‌ها با موفقیت ذخیره شدند.")
 
-        # --- بخش جدید: ساخت گزارش کامل برای README و صفحه وب ---
         report_data = {
             "update_time": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             "total_configs": len(final_results),
-            "countries": {country: len(configs) for country, configs in by_country.items()},
+            "countries": {res['country_name']: len(by_country[res['country_code']]) for res in named_results if res['country_code'] != "Unknown"},
             "configs": [{'name': res['named_config'].split('#')[1], 'ping': res['ping'], 'link': res['named_config']} for res in named_results]
         }
-        with open(os.path.join(REPORTS_DIR, "stats.json"), "w") as f: json.dump(report_data, f)
+        with open(os.path.join(REPORTS_DIR, "stats.json"), "w") as f: json.dump(report_data, f, ensure_ascii=False, indent=2)
         print("📊 گزارش کامل برای داشبورد ساخته شد.")
     else:
         print("🔴 هیچ کانفیگ سالمی پیدا نشد.")
