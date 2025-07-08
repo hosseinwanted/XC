@@ -354,7 +354,7 @@
                     elements.protocolSubsList.innerHTML = protocolHtml;
 
                     let regionHtml = '';
-                    const sortedCountries = Object.entries(stats.countries).sort((a,b) => a[0].localeCompare(b[0]));
+                    const sortedCountries = Object.entries(stats.countries).sort((a, b) => a[0].localeCompare(b[0]));
                     sortedCountries.forEach(([country, count]) => {
                         if (country !== "Unknown") {
                             const countryCode = Object.keys(COUNTRY_NAMES).find(key => COUNTRY_NAMES[key] === country) || country;
