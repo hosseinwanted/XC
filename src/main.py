@@ -26,6 +26,7 @@ def load_settings():
 
 SETTINGS = load_settings()
 GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
+# خواندن لیست برندها و اموجی‌ها از تنظیمات
 BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
 EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 REPORTS_DIR = "reports"
