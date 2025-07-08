@@ -1,504 +1,241 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>V2XCore | داشبورد جامع کانفیگ‌ها</title>
-    <!-- Chosen Palette: Midnight Blue & Electric Cyan -->
-    <!-- Application Structure Plan: A multi-tab SPA. Tab 1 (Dashboard) provides at-a-glance stats and primary links from stats.json. Tab 2 (All Configs) displays a searchable and PAGINATED list of all tested configs. Tab 3 (Live Test) allows users to select ANY subscription link and run the client-side WebSocket test on that specific subset. Tab 4 (All Links) provides a clean, categorized library of all subscription URLs. This hybrid model serves both users who want a quick, curated link and those who want to perform detailed, targeted real-time tests. -->
-    <!-- Visualization & Content Choices: 1. Dashboard: Key stats, Country Chart, Primary Links. Goal: Quick overview. 2. All Configs: A searchable, paginated HTML table with ping data. Goal: Fast initial load and easy browsing. Interaction: Search, Pagination, Sorting. 3. Live Tester: Dropdown menu, progress bar, dynamic result cards using robust WebSocket test. Goal: User-driven performance testing. 4. All Links: Structured lists with copy buttons. Goal: Comprehensive reference. All interactions are powered by Vanilla JS. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <style>
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #cbd5e1; }
-        .card { background-color: #0f172a; border: 1px solid #1e293b; }
-        .btn-primary { background-color: #0891b2; color: white; }
-        .btn-primary:disabled { background-color: #1e293b; color: #475569; cursor: not-allowed; }
-        .btn-secondary { background-color: #334155; color: #e2e8f0; }
-        .tab-active { color: #06b6d4; border-color: #06b6d4; }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
-        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 60vh; }
-        .config-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.1), 0 8px 10px -6px rgba(6, 182, 212, 0.1); }
-    </style>
-</head>
-<body class="antialiased">
+import os
+import json
+import base64
+import requests
+import socket
+import time
+import random
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse, unquote_plus, quote
+from collections import defaultdict
+from pathlib import Path
+import geoip2.database
+from bs4 import BeautifulSoup
 
-    <!-- Modal QR Code -->
-    <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden transition-opacity duration-300 opacity-0">
-        <div id="qr-modal-content" class="card rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center transform transition-all duration-300 scale-95">
-            <h3 class="text-xl font-bold mb-4 text-white">اسکن کنید</h3>
-            <div id="qrcode" class="flex justify-center items-center p-2 bg-white rounded-lg mx-auto w-64 h-64"></div>
-            <button id="close-modal-btn" class="mt-6 w-full btn-secondary font-bold py-2 px-4 rounded-lg transition-colors">بستن</button>
-        </div>
-    </div>
+# --- بخش تنظیمات ---
 
-    <!-- Main Container -->
-    <div class="container mx-auto p-4 md:p-6">
+def load_settings():
+    """فایل تنظیمات را بارگذاری می‌کند."""
+    try:
+        with open("settings.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"❌ خطا در خواندن settings.json: {e}")
+        exit()
 
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <div class="flex items-center gap-3">
-                <i class='bx bxs-zap text-4xl text-cyan-400'></i>
-                <h1 class="text-3xl font-bold text-white">V2XCore</h1>
-            </div>
-            <a href="https://github.com/Ganjabady/XC" target="_blank" class="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors flex items-center gap-2">
-                <i class='bx bxl-github text-xl'></i> مشاهده در گیت‌هاب
-            </a>
-        </header>
+SETTINGS = load_settings()
+GEOIP_DB_PATH = Path("GeoLite2-Country.mmdb")
+BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"]) 
+EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
+REPORTS_DIR = "reports"
 
-        <!-- Tab Navigation -->
-        <div class="mb-8 flex justify-center border-b border-slate-800">
-            <button data-tab="dashboard" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors tab-active">داشبورد</button>
-            <button data-tab="all-configs" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لیست کانفیگ‌ها</button>
-            <button data-tab="tester" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">تست زنده</button>
-            <button data-tab="links" class="tab-btn px-6 py-3 text-lg font-semibold border-b-2 border-transparent transition-colors">لینک‌های اشتراک</button>
-        </div>
+# دیکشنری برای ترجمه کد کشور به نام فارسی
+COUNTRY_NAMES = {
+    "US": "ایالات متحده", "DE": "آلمان", "FR": "فرانسه", "NL": "هلند",
+    "GB": "بریتانیا", "CA": "کانادا", "JP": "ژاپن", "SG": "سنگاپور",
+    "IR": "ایران", "RU": "روسیه", "TR": "ترکیه", "AE": "امارات",
+    # ... می‌توانید این لیست را کامل‌تر کنید
+}
 
-        <!-- Main Content -->
-        <main>
-            <!-- Dashboard Tab -->
-            <div id="tab-dashboard" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 card p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-xl font-bold text-white mb-6">توزیع سرورها بر اساس کشور</h3>
-                        <div class="chart-container">
-                            <canvas id="country-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="space-y-6">
-                        <div class="card p-6 rounded-2xl shadow-lg">
-                            <h3 class="text-xl font-bold text-white mb-4">آمار کلی</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center"><span class="text-slate-400">تعداد کل کانفیگ‌های سالم:</span><span id="total-configs-stat" class="font-bold text-lg text-green-400">...</span></div>
-                                <div class="flex justify-between items-center"><span class="text-slate-400">آخرین بروزرسانی سرور:</span><span id="last-update-stat" class="font-mono text-sm">...</span></div>
-                            </div>
-                        </div>
-                        <div class="card p-6 rounded-2xl shadow-lg">
-                            <h3 class="text-xl font-bold text-white mb-4">لینک‌های اصلی</h3>
-                            <div class="space-y-3" id="main-subs-list-dashboard"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+def setup_directories():
+    """پوشه‌های مورد نیاز را ایجاد می‌کند."""
+    base_dir = SETTINGS.get("out_dir", "subscriptions")
+    dirs_to_create = [
+        base_dir,
+        os.path.join(base_dir, "v2ray"),
+        os.path.join(base_dir, "base64"),
+        os.path.join(base_dir, "filtered", "subs"),
+        os.path.join(base_dir, "regions"),
+        REPORTS_DIR
+    ]
+    for d in dirs_to_create:
+        os.makedirs(d, exist_ok=True)
 
-            <!-- All Configs Tab -->
-            <div id="tab-all-configs" class="tab-content hidden">
-                <div class="card p-4 sm:p-6 rounded-2xl shadow-lg">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        <h3 class="text-xl font-bold text-white">لیست کامل کانفیگ‌ها (تست شده در سرور)</h3>
-                        <div class="relative w-full sm:w-64">
-                            <i class='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
-                            <input type="text" id="search-input-table" placeholder="جستجو بر اساس نام..." class="w-full bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 pl-12 pr-4 outline-none transition-colors">
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-right">
-                            <thead class="text-sm text-slate-500 border-b-2 border-slate-700">
-                                <tr>
-                                    <th class="p-4">#</th>
-                                    <th class="p-4">نام کانفیگ</th>
-                                    <th class="p-4 text-center">پروتکل</th>
-                                    <th class="p-4 text-center">پینگ سرور</th>
-                                    <th class="p-4 text-center">عملیات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="config-table-body"></tbody>
-                        </table>
-                        <div id="loading-spinner" class="text-center py-12"><i class='bx bx-loader-alt bx-spin text-4xl text-sky-500'></i><p class="mt-2">در حال بارگذاری کانفیگ‌ها...</p></div>
-                        <div id="no-results" class="text-center py-12 hidden"><i class='bx bx-error-circle text-4xl text-amber-500'></i><p class="mt-2">موردی یافت نشد.</p></div>
-                    </div>
-                    <div id="pagination-controls" class="flex justify-center items-center gap-4 mt-6"></div>
-                </div>
-            </div>
+def get_sources_from_files():
+    """کانفیگ‌ها را از فایل‌های مخازن گیت‌هاب دریافت می‌کند."""
+    all_configs = set()
+    sources = SETTINGS.get("sources", {}).get("files", [])
+    print("📥 شروع جمع‌آوری کانفیگ‌ها از فایل‌ها...")
+    for source_path in sources:
+        url = f"https://raw.githubusercontent.com/{source_path.strip()}"
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            content = response.text
+            try:
+                if len(content) % 4 != 0: content += '=' * (4 - len(content) % 4)
+                decoded_content = base64.b64decode(content).decode('utf-8', errors='ignore')
+                all_configs.update(decoded_content.splitlines())
+            except Exception:
+                all_configs.update(content.splitlines())
+        except requests.RequestException as e:
+            print(f"⚠️ خطا در دریافت منبع {url}: {e}")
+    return all_configs
+
+def scrape_telegram_channels():
+    """کانفیگ‌ها را از کانال‌های تلگرام استخراج می‌کند."""
+    all_configs = set()
+    channels = SETTINGS.get("sources", {}).get("channels", [])
+    print("✈️ شروع جمع‌آوری کانفیگ‌ها از کانال‌های تلگرام...")
+    
+    patterns = {
+        'vmess': r'vmess://[^\s<>"\'`]+',
+        'vless': r'vless://[^\s<>"\'`]+',
+        'trojan': r'trojan://[^\s<>"\'`]+',
+        'ss': r'ss://[^\s<>"\'`]+'
+    }
+
+    for channel in channels:
+        url = f"https://t.me/s/{channel.strip()}"
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.content, 'html.parser')
             
-            <!-- Live Tester Tab -->
-            <div id="tab-tester" class="tab-content hidden">
-                 <section class="card p-6 rounded-2xl mb-8 shadow-lg">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                        <div class="flex items-center justify-center md:justify-start gap-4">
-                            <button id="start-test-btn" class="btn-primary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105" disabled><i class='bx bx-play-circle text-2xl'></i>شروع تست</button>
-                            <button id="stop-test-btn" class="btn-secondary font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform hover:scale-105 hidden"><i class='bx bx-stop-circle text-2xl'></i>توقف</button>
-                        </div>
-                        <div class="col-span-2">
-                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">کل کانفیگ‌ها</p><p id="total-stat-tester" class="text-2xl font-bold text-white">0</p></div>
-                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">تست شده</p><p id="tested-stat" class="text-2xl font-bold text-cyan-400">0</p></div>
-                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">سالم</p><p id="working-stat" class="text-2xl font-bold text-green-400">0</p></div>
-                                <div class="bg-slate-800/50 p-3 rounded-lg"><p class="text-xs text-slate-400">بهترین پینگ</p><p id="best-ping-stat" class="text-2xl font-bold text-amber-400">N/A</p></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 w-full bg-slate-700 rounded-full h-2.5"><div id="progress-bar" class="progress-bar-fill h-2.5 rounded-full" style="width: 0%"></div></div>
-                </section>
-                <div class="mb-6 flex flex-col md:flex-row gap-4">
-                    <div class="relative flex-grow">
-                        <select id="sub-select" class="w-full appearance-none bg-slate-800/50 border-2 border-slate-700 focus:border-cyan-500 rounded-lg py-3 px-4 outline-none transition-colors"></select>
-                        <i class='bx bx-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-slate-400'></i>
-                    </div>
-                </div>
-                <main id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></main>
-                <div id="initial-message" class="text-center py-20"><i class='bx bx-list-ul text-6xl text-slate-600'></i><p class="mt-4 text-slate-400">یک لیست اشتراک انتخاب کرده و روی "شروع تست" کلیک کنید.</p></div>
-            </div>
+            page_text = soup.get_text()
+            for proto, pattern in patterns.items():
+                matches = re.findall(pattern, page_text)
+                all_configs.update(matches)
+        except requests.RequestException as e:
+            print(f"⚠️ خطا در دسترسی به کانال {channel}: {e}")
+    
+    return all_configs
 
-            <!-- All Links Tab -->
-            <div id="tab-links" class="tab-content hidden">
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="card p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-xl font-bold mb-4 text-white flex items-center gap-2"><i class='bx bx-link-alt'></i>لینک‌های اصلی</h3>
-                        <div class="space-y-3" id="main-subs-list"></div>
-                    </div>
-                    <div class="card p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-xl font-bold mb-4 text-white flex items-center gap-2"><i class='bx bx-network-chart'></i>بر اساس پروتکل</h3>
-                         <div class="space-y-3" id="protocol-subs-list"></div>
-                    </div>
-                    <div class="card p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-xl font-bold mb-4 text-white flex items-center gap-2"><i class='bx bx-world'></i>بر اساس کشور</h3>
-                         <div class="space-y-3 overflow-y-auto max-h-96" id="region-subs-list"></div>
-                    </div>
-                </div>
-            </div>
-        </main>
+class V2RayPingTester:
+    """تست سریع اتصال برای سنجش در دسترس بودن و پینگ اولیه."""
+    def __init__(self, configs, timeout=4):
+        self.configs = configs
+        self.timeout = timeout
+        self.max_threads = 200
 
-        <footer class="text-center mt-12 text-slate-500 text-sm"><p>ساخته شده با ❤️ و ☕️</p></footer>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const REPO_BASE_URL = "https://raw.githubusercontent.com/Ganjabady/XC/main";
-            const STATS_URL = `${REPO_BASE_URL}/reports/stats.json`;
-            const MAX_WORKERS = 50;
-            const TEST_TIMEOUT_MS = 5000;
-            const CONFIGS_PER_PAGE = 50;
-
-            const elements = {
-                startBtn: document.getElementById('start-test-btn'),
-                stopBtn: document.getElementById('stop-test-btn'),
-                resultsGrid: document.getElementById('results-grid'),
-                initialMessage: document.getElementById('initial-message'),
-                searchInputTable: document.getElementById('search-input-table'),
-                totalStatTester: document.getElementById('total-stat-tester'),
-                testedStat: document.getElementById('tested-stat'),
-                workingStat: document.getElementById('working-stat'),
-                bestPingStat: document.getElementById('best-ping-stat'),
-                progressBar: document.getElementById('progress-bar'),
-                qrModal: document.getElementById('qr-modal'),
-                qrModalContent: document.getElementById('qr-modal-content'),
-                qrcodeContainer: document.getElementById('qrcode'),
-                closeModalBtn: document.getElementById('close-modal-btn'),
-                tabs: document.querySelectorAll('.tab-btn'),
-                tabContents: document.querySelectorAll('.tab-content'),
-                subSelect: document.getElementById('sub-select'),
-                totalConfigsStatDash: document.getElementById('total-configs-stat'),
-                lastUpdateStatDash: document.getElementById('last-update-stat'),
-                countryChartCanvas: document.getElementById('country-chart'),
-                mainSubsListDashboard: document.getElementById('main-subs-list-dashboard'),
-                mainSubsList: document.getElementById('main-subs-list'),
-                protocolSubsList: document.getElementById('protocol-subs-list'),
-                regionSubsList: document.getElementById('region-subs-list'),
-                configTableBody: document.getElementById('config-table-body'),
-                loadingSpinner: document.getElementById('loading-spinner'),
-                noResults: document.getElementById('no-results'),
-                paginationControls: document.getElementById('pagination-controls'),
-            };
-
-            let allConfigsData = [];
-            let displayedConfigs = [];
-            let countryChart = null;
-            let isTesting = false;
-            let testQueue = [];
-            let currentPage = 1;
-            let totalPages = 1;
-
-            function parseConfig(link) {
-                try {
-                    if (!link.includes("://")) return null;
-                    const url = new URL(link);
-                    const host = url.hostname;
-                    const port = url.port || (url.protocol === 'vless:' || url.protocol === 'trojan:' ? '443' : '80');
-                    const name = decodeURIComponent(url.hash.substring(1)) || host;
-                    return { link, name, host, port, protocol: url.protocol.replace(':', '') };
-                } catch (e) { return null; }
-            }
+    def test_single(self, config):
+        """تست اتصال TCP ساده."""
+        try:
+            if "://" not in config: return None
+            uri_part = config.split('://')[1]
+            host_part = uri_part.split('#')[0].split('?')[0]
             
-            async function testLatency(host, port) {
-                return new Promise(resolve => {
-                    try {
-                        const ws = new WebSocket(`wss://${host}:${port}`);
-                        const timeout = setTimeout(() => { ws.close(); resolve(null); }, TEST_TIMEOUT_MS);
-                        const startTime = performance.now();
-                        ws.onopen = () => { clearTimeout(timeout); resolve(Math.round(performance.now() - startTime)); ws.close(); };
-                        ws.onerror = () => { clearTimeout(timeout); resolve(null); };
-                    } catch (e) { resolve(null); }
-                });
-            }
+            if '@' in host_part:
+                host_port_str = host_part.split('@')[1]
+            else:
+                host_port_str = host_part
 
-            async function worker() {
-                while (isTesting && testQueue.length > 0) {
-                    const config = testQueue.shift();
-                    if (!config) continue;
-                    const latency = await testLatency(config.host, config.port);
-                    if (!isTesting) break;
-                    testedConfigs.push(config);
-                    if (latency !== null) {
-                        config.ping = latency;
-                        renderCard(config);
-                        sortResults();
-                    }
-                    updateStats();
-                }
-            }
-
-            function renderCard(config) {
-                const card = document.createElement('div');
-                card.className = 'config-card card p-4 rounded-xl flex flex-col justify-between transition-all duration-300';
-                card.dataset.name = config.name.toLowerCase();
-                card.dataset.ping = config.ping;
-                const protocol = config.protocol.toUpperCase();
-                const badgeColor = { VLESS: 'bg-blue-500/20 text-blue-300', VMESS: 'bg-purple-500/20 text-purple-300', TROJAN: 'bg-red-500/20 text-red-300', SS: 'bg-orange-500/20 text-orange-300' }[protocol] || 'bg-slate-500/20 text-slate-300';
-                card.innerHTML = `<div><div class="flex justify-between items-start"><p class="font-bold text-white text-sm mb-2 leading-tight">${config.name}</p><span class="px-2 py-0.5 text-xs font-bold rounded-full ${badgeColor}">${protocol}</span></div><p class="text-xs text-slate-400 font-mono">${config.host}</p></div><div class="flex justify-between items-center mt-4"><div class="text-green-400 font-bold text-lg">${config.ping} <span class="text-xs font-normal">ms</span></div><div class="flex items-center gap-1"><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="کپی"><i class='bx bx-copy text-lg'></i></button><button class="qr-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="QR کد"><i class='bx bx-qr text-lg'></i></button></div></div>`;
-                elements.resultsGrid.appendChild(card);
-            }
-
-            function updateStats() {
-                const workingCount = elements.resultsGrid.children.length;
-                elements.workingStat.textContent = workingCount;
-                elements.testedStat.textContent = testedConfigs.length;
-                const progress = allConfigs.length > 0 ? (testedConfigs.length / allConfigs.length) * 100 : 0;
-                elements.progressBar.style.width = `${progress}%`;
-                if (workingCount > 0) {
-                    const pings = Array.from(elements.resultsGrid.children).map(c => parseInt(c.dataset.ping));
-                    elements.bestPingStat.textContent = `${Math.min(...pings)}ms`;
-                } else {
-                    elements.bestPingStat.textContent = 'N/A';
-                }
-            }
-
-            function sortResults() {
-                const cards = Array.from(elements.resultsGrid.children);
-                cards.sort((a, b) => parseInt(a.dataset.ping) - parseInt(b.dataset.ping));
-                cards.forEach(card => elements.resultsGrid.appendChild(card));
-            }
+            if ':' in host_port_str:
+                host = host_port_str.rsplit(':', 1)[0].strip("[]")
+                port = int(host_port_str.rsplit(':', 1)[1])
+            else:
+                host = host_port_str
+                port = 443
             
-            async function startTest() {
-                if (isTesting || !elements.subSelect.value) return;
-                isTesting = true;
-                elements.startBtn.classList.add('hidden');
-                elements.stopBtn.classList.remove('hidden');
-                elements.initialMessage.classList.add('hidden');
-                elements.resultsGrid.innerHTML = '';
-                testedConfigs = [];
-                updateStats();
-                
-                try {
-                    const response = await fetch(elements.subSelect.value);
-                    if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
-                    const text = await response.text();
-                    allConfigs = text.split('\n').map(parseConfig).filter(Boolean);
-                    elements.totalStatTester.textContent = allConfigs.length;
-                    if (allConfigs.length === 0) throw new Error("Subscription file is empty.");
-                    testQueue = [...allConfigs];
-                    for (let i = 0; i < MAX_WORKERS; i++) { worker(); }
-                } catch (error) {
-                    console.error("Failed to fetch or process subscription:", error);
-                    elements.initialMessage.innerHTML = `<i class='bx bx-error text-6xl text-red-500'></i><p class="mt-4 text-slate-400">خطا در دریافت لیست اشتراک. لطفاً از اتصال خود و معتبر بودن لینک مطمئن شوید.</p>`;
-                    elements.initialMessage.classList.remove('hidden');
-                    stopTest();
-                }
-            }
+            start_time = time.time()
+            with socket.create_connection((host, port), timeout=self.timeout) as sock:
+                ping_ms = int((time.time() - start_time) * 1000)
+                return {'config': config, 'ping': ping_ms, 'host': host}
+        except Exception:
+            return None
 
-            function stopTest() {
-                isTesting = false;
-                testQueue = [];
-                elements.startBtn.classList.remove('hidden');
-                elements.stopBtn.classList.add('hidden');
-            }
+    def run(self):
+        """تمام کانفیگ‌ها را به صورت موازی تست می‌کند."""
+        reachable_configs = []
+        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+            future_to_config = {executor.submit(self.test_single, config): config for config in self.configs}
             
-            function createSubLinkItem(title, url) {
-                return `<div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/50"><span class="font-semibold">${title}</span><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${url}" title="کپی"><i class='bx bx-copy text-xl'></i></button></div>`;
-            }
+            total = len(future_to_config)
+            for i, future in enumerate(as_completed(future_to_config)):
+                result = future.result()
+                if result:
+                    reachable_configs.append(result)
+                print(f"\r🧪 تست کانفیگ‌ها: {i+1}/{total} | ✅ سالم: {len(reachable_configs)}", end="")
 
-            async function populateStaticContent() {
-                try {
-                    const statsResponse = await fetch(STATS_URL);
-                    if (!statsResponse.ok) throw new Error('Failed to fetch stats');
-                    const stats = await statsResponse.json();
+        print(f"\n\n✅ تست کامل شد. {len(reachable_configs)} کانفیگ سالم پیدا شد.")
+        return sorted(reachable_configs, key=lambda x: x['ping'])
 
-                    elements.totalConfigsStatDash.textContent = stats.total_configs;
-                    elements.lastUpdateStatDash.textContent = new Date(stats.update_time).toLocaleString('fa-IR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-                    renderCountryChart(stats.countries);
-                    
-                    const mainSubUrl = `${REPO_BASE_URL}/subscriptions/v2ray/all_sub.txt`;
-                    const base64SubUrl = `${REPO_BASE_URL}/subscriptions/base64/all_sub.txt`;
-                    
-                    let mainSubsHtml = createSubLinkItem('لینک کامل', mainSubUrl) + createSubLinkItem('لینک Base64', base64SubUrl);
-                    elements.mainSubsListDashboard.innerHTML = mainSubsHtml;
-                    elements.mainSubsList.innerHTML = mainSubsHtml;
+def get_country_and_flag(ip_address, geo_reader):
+    """کشور و پرچم را بر اساس آدرس IP تشخیص می‌دهد."""
+    if not ip_address or not geo_reader:
+        return "Unknown", "Unknown", "🌐"
+    try:
+        response = geo_reader.country(ip_address)
+        country_code = response.country.iso_code
+        country_name = COUNTRY_NAMES.get(country_code, country_code) # ترجمه به فارسی
+        if country_code:
+            flag = "".join(chr(ord(c) + 127397) for c in country_code.upper())
+            return country_code, country_name, flag
+        return "Unknown", "Unknown", "🌐"
+    except Exception:
+        return "Unknown", "Unknown", "🌐"
 
-                    let protocolHtml = '';
-                    let subSelectOptions = '<option value="" disabled selected>یک لیست برای تست انتخاب کنید</option>';
-                    subSelectOptions += `<option value="${mainSubUrl}">همه کانفیگ‌ها (${stats.total_configs})</option>`;
+def main():
+    start_time = time.time()
+    setup_directories()
 
-                    ['vless', 'vmess', 'trojan', 'ss'].forEach(p => {
-                        const url = `${REPO_BASE_URL}/subscriptions/filtered/subs/${p}.txt`;
-                        protocolHtml += createSubLinkItem(p.toUpperCase(), url);
-                        subSelectOptions += `<option value="${url}">فقط ${p.toUpperCase()}</option>`;
-                    });
-                    elements.protocolSubsList.innerHTML = protocolHtml;
+    file_configs = get_sources_from_files()
+    channel_configs = scrape_telegram_channels()
+    unique_configs = list(file_configs.union(channel_configs))
+    print(f"🔬 تعداد {len(unique_configs)} کانفیگ یکتا برای تست آماده شد.\n")
 
-                    let regionHtml = '';
-                    const sortedCountries = Object.keys(stats.countries).sort();
-                    sortedCountries.forEach(c => {
-                        if (c !== "Unknown") {
-                            const url = `${REPO_BASE_URL}/subscriptions/regions/${c}.txt`;
-                            regionHtml += createSubLinkItem(c, url);
-                            subSelectOptions += `<option value="${url}">فقط ${c}</option>`;
-                        }
-                    });
-                    elements.regionSubsList.innerHTML = regionHtml;
-                    elements.subSelect.innerHTML = subSelectOptions;
+    tester = V2RayPingTester(unique_configs, timeout=SETTINGS.get("timeout", 5))
+    final_results = tester.run()
 
-                } catch (error) {
-                    console.error("Failed to populate static content:", error);
-                }
-            }
+    if final_results:
+        geo_reader = geoip2.database.Reader(GEOIP_DB_PATH) if GEOIP_DB_PATH.exists() else None
+        
+        by_country = defaultdict(list)
+        by_protocol = defaultdict(list)
+        
+        print("\n🎨 شروع نام‌گذاری و دسته‌بندی...")
+        named_results = []
+        for i, res in enumerate(final_results, 1):
+            try:
+                ip = socket.gethostbyname(res['host'])
+                country_code, country_name, flag = get_country_and_flag(ip, geo_reader)
+            except socket.gaierror:
+                country_code, country_name, flag = "Unknown", "Unknown", "🌐"
+
+            selected_brand = random.choice(BRANDS_LIST)
+            selected_emoji = random.choice(EMOJIS_LIST)
+            new_name = f"{flag} {country_name} #{i:04d} | {selected_brand} {selected_emoji}"
             
-            async function loadAllConfigsTable() {
-                 try {
-                    const response = await fetch(STATS_URL);
-                    if (!response.ok) throw new Error('Failed to fetch stats for table');
-                    const stats = await response.json();
-                    allConfigsData = stats.configs.map((config, index) => ({
-                        id: index + 1,
-                        ...parseConfig(config.link),
-                        ping: config.ping
-                    }));
-                    displayedConfigs = [...allConfigsData];
-                    renderTablePage(1);
-                } catch (error) {
-                    console.error('Error fetching data for table:', error);
-                    elements.configTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-red-500">خطا در بارگذاری اطلاعات.</td></tr>`;
-                } finally {
-                    elements.loadingSpinner.classList.add('hidden');
-                }
-            }
+            original_link = res['config'].split('#')[0]
+            named_config = f"{original_link}#{quote(new_name)}"
+            
+            res['named_config'] = named_config
+            res['country_code'] = country_code
+            res['country_name'] = country_name
+            named_results.append(res)
+            
+            by_country[country_code].append(named_config)
+            by_protocol[named_config.split("://")[0]].append(named_config)
 
-            function renderTablePage(page) {
-                currentPage = page;
-                elements.configTableBody.innerHTML = '';
-                const start = (page - 1) * CONFIGS_PER_PAGE;
-                const end = start + CONFIGS_PER_PAGE;
-                const pageConfigs = displayedConfigs.slice(start, end);
-                
-                pageConfigs.forEach((config) => {
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
-                    const protocol = config.protocol.toUpperCase();
-                    const badgeColor = { VLESS: 'bg-blue-500/20 text-blue-300', VMESS: 'bg-purple-500/20 text-purple-300', TROJAN: 'bg-red-500/20 text-red-300', SS: 'bg-orange-500/20 text-orange-300' }[protocol] || 'bg-slate-500/20 text-slate-300';
-                    row.innerHTML = `
-                        <td class="p-4 font-mono text-slate-500">${config.id}</td>
-                        <td class="p-4 font-semibold text-white">${config.name}</td>
-                        <td class="p-4 text-center"><span class="px-3 py-1 text-xs font-bold rounded-full ${badgeColor}">${protocol}</span></td>
-                        <td class="p-4 text-center text-green-400 font-semibold">${config.ping} ms</td>
-                        <td class="p-4 text-center"><div class="flex justify-center items-center gap-1"><button class="copy-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="کپی"><i class='bx bx-copy text-lg'></i></button><button class="qr-btn p-2 rounded-full hover:bg-slate-700 text-slate-400" data-link="${config.link}" title="QR کد"><i class='bx bx-qr text-lg'></i></button></div></td>
-                    `;
-                    elements.configTableBody.appendChild(row);
-                });
-                renderPaginationControls();
-            }
+        if geo_reader: geo_reader.close()
+        
+        base_dir = SETTINGS.get("out_dir", "subscriptions")
+        
+        for country, configs in by_country.items():
+            with open(os.path.join(base_dir, "regions", f"{country}.txt"), "w", encoding="utf-8") as f: f.write("\n".join(configs))
+        
+        for protocol, configs in by_protocol.items():
+            with open(os.path.join(base_dir, "filtered", "subs", f"{protocol}.txt"), "w", encoding="utf-8") as f: f.write("\n".join(configs))
+        
+        print("💾 ذخیره‌سازی فایل‌ها...")
+        all_final_links = [res['named_config'] for res in named_results]
+        with open(os.path.join(base_dir, "v2ray", "all_sub.txt"), "w") as f: f.write("\n".join(all_final_links))
+        with open(os.path.join(base_dir, "base64", "all_sub.txt"), "w") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
+        print("✅ تمام فایل‌ها با موفقیت ذخیره شدند.")
 
-            function renderPaginationControls() {
-                elements.paginationControls.innerHTML = '';
-                totalPages = Math.ceil(displayedConfigs.length / CONFIGS_PER_PAGE);
-                if (totalPages <= 1) return;
-                
-                const prevBtn = document.createElement('button');
-                prevBtn.innerHTML = `<i class='bx bx-chevron-right text-xl'></i> قبلی`;
-                prevBtn.className = 'btn-secondary px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50';
-                prevBtn.disabled = currentPage === 1;
-                prevBtn.addEventListener('click', () => renderTablePage(currentPage - 1));
-                
-                const pageInfo = document.createElement('span');
-                pageInfo.className = 'font-semibold text-slate-400';
-                pageInfo.textContent = `صفحه ${currentPage} از ${totalPages}`;
+        report_data = {
+            "update_time": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "total_configs": len(final_results),
+            "countries": {res['country_name']: len(by_country[res['country_code']]) for res in named_results if res['country_code'] != "Unknown"},
+            "configs": [{'name': res['named_config'].split('#')[1], 'ping': res['ping'], 'link': res['named_config']} for res in named_results]
+        }
+        with open(os.path.join(REPORTS_DIR, "stats.json"), "w") as f: json.dump(report_data, f, ensure_ascii=False, indent=2)
+        print("📊 گزارش کامل برای داشبورد ساخته شد.")
+    else:
+        print("🔴 هیچ کانفیگ سالمی پیدا نشد.")
 
-                const nextBtn = document.createElement('button');
-                nextBtn.innerHTML = `بعدی <i class='bx bx-chevron-left text-xl'></i>`;
-                nextBtn.className = 'btn-secondary px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50';
-                nextBtn.disabled = currentPage === totalPages;
-                nextBtn.addEventListener('click', () => renderTablePage(currentPage + 1));
-                
-                elements.paginationControls.append(prevBtn, pageInfo, nextBtn);
-            }
+    print(f"\n✨ کل فرآیند در {time.time() - start_time:.2f} ثانیه به پایان رسید.")
 
-            function renderCountryChart(countries) {
-                if (countryChart) countryChart.destroy();
-                const sorted = Object.entries(countries).sort(([,a],[,b]) => b-a).slice(0, 15);
-                const labels = sorted.map(c => c[0]);
-                const data = sorted.map(c => c[1]);
-                const ctx = elements.countryChartCanvas.getContext('2d');
-                countryChart = new Chart(ctx, {
-                    type: 'bar', data: { labels, datasets: [{ label: 'تعداد سرورها', data, backgroundColor: 'rgba(34, 211, 238, 0.5)', borderColor: 'rgba(34, 211, 238, 1)', borderWidth: 1, borderRadius: 5 }] },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { rtl: true, bodyFont: { family: 'Vazirmatn' }, titleFont: { family: 'Vazirmatn' } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
-                });
-            }
-
-            // --- EVENT LISTENERS ---
-            elements.startBtn.addEventListener('click', startTest);
-            elements.stopBtn.addEventListener('click', stopTest);
-            elements.subSelect.addEventListener('change', () => {
-                elements.startBtn.disabled = !elements.subSelect.value;
-            });
-            elements.searchInputTable.addEventListener('input', () => {
-                const searchTerm = elements.searchInputTable.value.toLowerCase();
-                displayedConfigs = allConfigsData.filter(c => c.name.toLowerCase().includes(searchTerm));
-                if (displayedConfigs.length === 0) {
-                    elements.noResults.classList.remove('hidden');
-                    elements.configTableBody.innerHTML = '';
-                    elements.paginationControls.innerHTML = '';
-                } else {
-                    elements.noResults.classList.add('hidden');
-                    renderTablePage(1);
-                }
-            });
-            document.body.addEventListener('click', e => {
-                const copyBtn = e.target.closest('.copy-btn');
-                if (copyBtn) {
-                    navigator.clipboard.writeText(copyBtn.dataset.link).then(() => {
-                        const originalIcon = copyBtn.innerHTML;
-                        copyBtn.innerHTML = "<i class='bx bxs-check-circle text-lg text-green-500'></i>";
-                        setTimeout(() => { copyBtn.innerHTML = originalIcon; }, 1500);
-                    });
-                }
-                const qrBtn = e.target.closest('.qr-btn');
-                if (qrBtn) {
-                    elements.qrcodeContainer.innerHTML = '';
-                    new QRCode(elements.qrcodeContainer, { text: qrBtn.dataset.link, width: 256, height: 256, colorDark : "#e2e8f0", colorLight : "#0f172a" });
-                    elements.qrModal.classList.remove('hidden');
-                    setTimeout(() => { elements.qrModal.classList.add('opacity-100'); elements.qrModalContent.classList.remove('scale-95'); }, 10);
-                }
-            });
-            elements.closeModalBtn.addEventListener('click', () => {
-                elements.qrModalContent.classList.add('scale-95');
-                elements.qrModal.classList.remove('opacity-100');
-                setTimeout(() => elements.qrModal.classList.add('hidden'), 300);
-            });
-            elements.tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    elements.tabs.forEach(t => t.classList.remove('tab-active'));
-                    tab.classList.add('tab-active');
-                    elements.tabContents.forEach(content => content.classList.add('hidden'));
-                    document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
-                });
-            });
-
-            // --- INITIALIZATION ---
-            populateStaticContent();
-            loadAllConfigsTable();
-        });
-    </script>
-</body>
-</html>
+if __name__ == "__main__":
+    main()
