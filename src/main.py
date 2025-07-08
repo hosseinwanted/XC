@@ -30,12 +30,26 @@ BRANDS_LIST = SETTINGS.get("brands", ["V2XCore"])
 EMOJIS_LIST = SETTINGS.get("emojis", ["⚡️"])
 REPORTS_DIR = "reports"
 
-# دیکشنری برای ترجمه کد کشور به نام فارسی
+# دیکشنری کامل برای ترجمه کد کشور به نام فارسی
 COUNTRY_NAMES = {
     "US": "ایالات متحده", "DE": "آلمان", "FR": "فرانسه", "NL": "هلند",
     "GB": "بریتانیا", "CA": "کانادا", "JP": "ژاپن", "SG": "سنگاپور",
-    "IR": "ایران", "RU": "روسیه", "TR": "ترکیه", "AE": "امارات",
-    # ... می‌توانید این لیست را کامل‌تر کنید
+    "IR": "ایران", "RU": "روسیه", "TR": "ترکیه", "AE": "امارات", "IN": "هند",
+    "HK": "هنگ کنگ", "ID": "اندونزی", "KR": "کره جنوبی", "VN": "ویتنام",
+    "AU": "استرالیا", "CH": "سوئیس", "SE": "سوئد", "FI": "فنلاند",
+    "NO": "نروژ", "DK": "دانمارک", "IE": "ایرلند", "IT": "ایتالیا",
+    "ES": "اسپانیا", "PL": "لهستان", "UA": "اوکراین", "RO": "رومانی",
+    "CZ": "جمهوری چک", "AT": "اتریش", "BE": "بلژیک", "LU": "لوکزامبورگ",
+    "PT": "پرتغال", "HU": "مجارستان", "BG": "بلغارستان", "RS": "صربستان",
+    "GR": "یونان", "LT": "لیتوانی", "LV": "لتونی", "EE": "استونی",
+    "MD": "مولداوی", "SI": "اسلوونی", "SK": "اسلواکی", "HR": "کرواسی",
+    "BA": "بوسنی و هرزگوین", "AL": "آلبانی", "CY": "قبرس", "MT": "مالت",
+    "IS": "ایسلند", "MX": "مکزیک", "BR": "برزیل", "AR": "آرژانتین",
+    "CL": "شیلی", "CO": "کلمبیا", "PE": "پرو", "ZA": "آفریقای جنوبی",
+    "EG": "مصر", "SA": "عربستان سعودی", "IL": "اسرائیل", "JO": "اردن",
+    "KZ": "قزاقستان", "TH": "تایلند", "MY": "مالزی", "PH": "فیلیپین",
+    "NZ": "نیوزیلند", "TW": "تایوان", "VG": "جزایر ویرجین بریتانیا",
+    "MU": "موریس", "SC": "سیشل", "NP": "نپال"
 }
 
 def setup_directories():
@@ -158,7 +172,7 @@ def get_country_and_flag(ip_address, geo_reader):
     try:
         response = geo_reader.country(ip_address)
         country_code = response.country.iso_code
-        country_name = COUNTRY_NAMES.get(country_code, country_code) # ترجمه به فارسی
+        country_name = COUNTRY_NAMES.get(country_code, country_code)
         if country_code:
             flag = "".join(chr(ord(c) + 127397) for c in country_code.upper())
             return country_code, country_name, flag
@@ -195,7 +209,7 @@ def main():
 
             selected_brand = random.choice(BRANDS_LIST)
             selected_emoji = random.choice(EMOJIS_LIST)
-            new_name = f"{flag} {country_name} #{i:04d} | {selected_brand} {selected_emoji}"
+            new_name = f"{flag} {country_code} #{i:04d} | {selected_brand} {selected_emoji}"
             
             original_link = res['config'].split('#')[0]
             named_config = f"{original_link}#{quote(new_name)}"
