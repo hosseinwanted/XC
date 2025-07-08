@@ -214,6 +214,7 @@ def main():
             original_link = res['config'].split('#')[0]
             named_config = f"{original_link}#{quote(new_name)}"
             
+            # ذخیره نتیجه نام‌گذاری شده برای استفاده‌های بعدی
             res['named_config'] = named_config
             res['country_code'] = country_code
             res['country_name'] = country_name
@@ -238,6 +239,7 @@ def main():
         with open(os.path.join(base_dir, "base64", "all_sub.txt"), "w") as f: f.write(base64.b64encode("\n".join(all_final_links).encode()).decode())
         print("✅ تمام فایل‌ها با موفقیت ذخیره شدند.")
 
+        # --- بخش جدید: ساخت گزارش کامل برای README و صفحه وب ---
         report_data = {
             "update_time": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             "total_configs": len(final_results),
