@@ -22,26 +22,24 @@ def main():
     readme_content = readme_content.replace("{{TOTAL_CONFIGS}}", str(stats["total_configs"]))
     readme_content = readme_content.replace("YOUR_USERNAME/YOUR_REPO", repo_name)
 
-    # --- بخش جدید: ساخت جدول سه ستونه برای کشورها ---
     sorted_countries = sorted(stats["countries"].items(), key=lambda item: item[1], reverse=True)
     
-    # تقسیم لیست کشورها به سه ستون
     num_countries = len(sorted_countries)
     col_len = (num_countries + 2) // 3
     cols = [sorted_countries[i:i + col_len] for i in range(0, num_countries, col_len)]
     
-    # ساخت هدر جدول
     country_table = "| کشور | تعداد | لینک | کشور | تعداد | لینک | کشور | تعداد | لینک |\n"
     country_table += "| :--- | :---: | :---: | :--- | :---: | :---: | :--- | :---: | :---: |\n"
     
-    # پر کردن ردیف‌های جدول
     for i in range(col_len):
         row_items = []
         for col_idx in range(3):
             if i < len(cols[col_idx]):
                 country, count = cols[col_idx][i]
                 if country == "Unknown": continue
-                link = f"[`{country}`](https://raw.githubusercontent.com/{repo_name}/main/subscriptions/regions/{country}.txt)"
+                # پیدا کردن کد کشور بر اساس نام کامل
+                country_code = next((code for code, name in COUNTRY_NAMES.items() if name == country), country)
+                link = f"[`{country}`](https://raw.githubusercontent.com/{repo_name}/main/subscriptions/regions/{country_code}.txt)"
                 row_items.extend([link, f"`{count}`", "✅"])
             else:
                 row_items.extend(["", "", ""])
@@ -53,6 +51,13 @@ def main():
         f.write(readme_content)
     
     print("✅ فایل README.md با موفقیت به‌روزرسانی شد.")
+
+# این دیکشنری باید با دیکشنری main.py هماهنگ باشد
+COUNTRY_NAMES = {
+    "US": "ایالات متحده", "DE": "آلمان", "FR": "فرانسه", "NL": "هلند",
+    "GB": "بریتانیا", "CA": "کانادا", "JP": "ژاپن", "SG": "سنگاپور",
+    "IR": "ایران", "RU": "روسیه", "TR": "ترکیه", "AE": "امارات",
+}
 
 if __name__ == "__main__":
     main()
