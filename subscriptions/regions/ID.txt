@@ -1,1 +1,1 @@
-vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&encryption=none&headerType=&type=tcp#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2315765%20%7C%20%40V2XCore%20%F0%9F%94%B0
+vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&encryption=none&headerType=&type=tcp#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2316399%20%7C%20%40V2XCore%20%F0%9F%9A%80
