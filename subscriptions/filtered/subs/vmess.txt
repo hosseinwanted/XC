@@ -1,1 +1,1 @@
-vmess://Aimer@104.25.252.184:8443?security=tls&type=tcp&sni=ngepz.ambercc.filegear-sg.me#%F0%9F%8C%90%20Unknown%20%231609%20%7C%20%40V2XCore%20%F0%9F%92%8E
+vmess://Aimer@104.25.252.184:8443?security=tls&type=tcp&sni=ngepz.ambercc.filegear-sg.me#%F0%9F%8C%90%20Unknown%20%2310596%20%7C%20%40V2XCore%20%E2%9A%A1%EF%B8%8F
