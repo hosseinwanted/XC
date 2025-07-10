@@ -1,1 +1,1 @@
-vless://9a1e5469-35e9-4d98-b831-28bc6073f685@45.194.11.176:443?security=tls&sni=de.outberlin.online&type=grpc&serviceName=gprc&fp=chrome&alpn=http%2F1.1#%F0%9F%87%B2%F0%9F%87%BA%20MU%20%235653%20%7C%20t.me/V2XCore%20%F0%9F%91%91
+vless://9a1e5469-35e9-4d98-b831-28bc6073f685@45.194.11.176:443?security=tls&sni=de.outberlin.online&type=grpc&serviceName=gprc&fp=chrome&alpn=http%2F1.1#%F0%9F%87%B2%F0%9F%87%BA%20MU%20%230030%20%7C%20%40V2XCore%20%F0%9F%8E%AF

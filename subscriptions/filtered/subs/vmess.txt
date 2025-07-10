@@ -1,1 +1,2 @@
-vmess://Aimer@104.25.252.184:8443?security=tls&type=tcp&sni=ngepz.ambercc.filegear-sg.me#%F0%9F%8C%90%20Unknown%20%236117%20%7C%20t.me/V2XCore%20%F0%9F%94%A5
+vmess://Aimer@104.25.252.184:8443?security=tls&type=tcp&sni=ngepz.ambercc.filegear-sg.me#%F0%9F%8C%90%20Unknown%20%233880%20%7C%20%40V2XCore%20%F0%9F%9A%80
+vmess://c208e0ae-6f6d-4745-99da-44a44744c530@www.meter.net:2083?encryption=auto&security=tls&sni=blaze-ger-248.blazecloudmain.site&fp=&type=ws&path=/linkwsrt?ed%3D2560&host=blaze-ger-248.blazecloudmain.site#%F0%9F%8C%90%20Unknown%20%2314214%20%7C%20%40V2XCore%20%F0%9F%9A%80
