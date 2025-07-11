@@ -1,2 +1,2 @@
-vless://588f094b-431b-422c-b80b-007945037072@45.142.214.188:443?sni=md01.abvpn.ru&type=ws&host=md01.abvpn.ru&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%A9%20MD%20%2316365%20%7C%20t.me/V2XCore%20%F0%9F%9A%80
-vless://cc8ee26f-ff3c-40e7-ab93-c0c7a144a55f@213.159.78.23:443?type=tcp&encryption=none&sni=google.com&fp=chrome&security=reality&pbk=cTm0TIKL9qK550XI...&sid=#%F0%9F%87%B2%F0%9F%87%A9%20MD%20%2316372%20%7C%20%40V2XCore%20%F0%9F%8E%AF
+vless://588f094b-431b-422c-b80b-007945037072@45.142.214.188:443?sni=md01.abvpn.ru&type=ws&host=md01.abvpn.ru&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%A9%20MD%20%2316642%20%7C%20t.me/V2XCore%20%F0%9F%91%91
+vless://cc8ee26f-ff3c-40e7-ab93-c0c7a144a55f@213.159.78.23:443?type=tcp&encryption=none&sni=google.com&fp=chrome&security=reality&pbk=cTm0TIKL9qK550XI...&sid=#%F0%9F%87%B2%F0%9F%87%A9%20MD%20%2316647%20%7C%20t.me/V2XCore%20%F0%9F%91%91
