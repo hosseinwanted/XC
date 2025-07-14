@@ -1,2 +1,2 @@
-vless://52395e5e-40db-4c24-c32e-57954697f906@218.33.84.142:26518?security=reality&encryption=none&pbk=rwpbqas_HY8knlW0fFSIeUrjgBXHBzSNboflsLD8elA&headerType=none&fp=chrome&type=tcp&sni=www.lovelive-anime.jp#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2319768%20%7C%20t.me/V2XCore%20%E2%9C%A8
-vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&type=tcp&encryption=none#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2319924%20%7C%20%40V2XCore%20%E2%9A%A1%EF%B8%8F
+vless://52395e5e-40db-4c24-c32e-57954697f906@218.33.84.142:26518?security=reality&encryption=none&pbk=rwpbqas_HY8knlW0fFSIeUrjgBXHBzSNboflsLD8elA&headerType=none&fp=chrome&type=tcp&sni=www.lovelive-anime.jp#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2318936%20%7C%20t.me/V2XCore%20%F0%9F%94%A5
+vless://0d6b5af6-17df-4bb1-af76-e524f00602a5@172.232.248.242:2321?security=&type=tcp&encryption=none#%F0%9F%87%AE%F0%9F%87%A9%20ID%20%2318973%20%7C%20t.me/V2XCore%20%E2%9C%A8
