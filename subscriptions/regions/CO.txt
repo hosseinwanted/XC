@@ -1,3 +1,2 @@
-ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@154.223.16.212:989#%F0%9F%87%A8%F0%9F%87%B4%20CO%20%2316919%20%7C%20%40V2XCore%20%E2%9A%A1%EF%B8%8F
-vless://157448af-8ecf-4075-a9e9-b23a6a94899b@169.150.228.24:8443?security=tls&sni=bog-co-01.fromblancwithlove.com&type=tcp#%F0%9F%87%A8%F0%9F%87%B4%20CO%20%2316954%20%7C%20%40V2XCore%20%F0%9F%9A%80
-vless://157448af-8ecf-4075-a9e9-b23a6a94899b@169.150.228.24:8443?security=tls&sni=bog-co-01.fromblancwithlove.com&type=tcp#%F0%9F%87%A8%F0%9F%87%B4%20CO%20%2316967%20%7C%20%40V2XCore%20%F0%9F%94%A5
+ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@154.223.16.212:989#%F0%9F%87%A8%F0%9F%87%B4%20CO%20%2316707%20%7C%20t.me/V2XCore%20%F0%9F%8E%AF
+vless://157448af-8ecf-4075-a9e9-b23a6a94899b@169.150.228.24:8443?security=tls&sni=bog-co-01.fromblancwithlove.com&type=tcp#%F0%9F%87%A8%F0%9F%87%B4%20CO%20%2316715%20%7C%20%40V2XCore%20%F0%9F%91%91
