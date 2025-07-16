@@ -1,1 +1,1 @@
-vless://157448af-8ecf-4075-a9e9-b23a6a94899b@79.127.218.204:8443?security=tls&sni=ath-gr-01.fromblancwithlove.com&type=tcp#%F0%9F%87%AC%F0%9F%87%B7%20GR%20%2319229%20%7C%20%40V2XCore%20%F0%9F%8E%AF
+vless://157448af-8ecf-4075-a9e9-b23a6a94899b@79.127.218.204:8443?security=tls&sni=ath-gr-01.fromblancwithlove.com&type=tcp#%F0%9F%87%AC%F0%9F%87%B7%20GR%20%2319713%20%7C%20t.me/V2XCore%20%F0%9F%92%8E
