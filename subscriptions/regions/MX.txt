@@ -1,1 +1,2 @@
-vless://65d2dfe6-e2f9-5880-a799-ac6664053e25@45.134.9.188:443?allowInsecure=1&sni=zula.ir&type=ws&host=zula.ir&path=/vlessfp=chrome&security=tls#%F0%9F%87%B2%F0%9F%87%BD%20MX%20%2317573%20%7C%20%40V2XCore%20%E2%9C%A8
+vless://65d2dfe6-e2f9-5880-a799-ac6664053e25@45.134.9.188:443?allowInsecure=1&sni=zula.ir&type=ws&host=zula.ir&path=/vlessfp=chrome&security=tls#%F0%9F%87%B2%F0%9F%87%BD%20MX%20%2317284%20%7C%20t.me/V2XCore%20%F0%9F%91%91
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpmOGY3YUN6Y1BLYnNGOHAz@147.78.1.27:990#%F0%9F%87%B2%F0%9F%87%BD%20MX%20%2317423%20%7C%20%40V2XCore%20%F0%9F%9A%80
