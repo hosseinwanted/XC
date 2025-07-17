@@ -1,1 +1,1 @@
-vless://e6f7a8b9-c0d1-4e2f-9a3b-1c4d5e6f7a8b@185.146.176.13:443?security=tls&sni=javidnaman.iran&type=ws&host=javidnaman.iran&fp=chrome#%F0%9F%87%AC%F0%9F%87%AA%20GE%20%2320672%20%7C%20t.me/V2XCore%20%F0%9F%9A%80
+vless://e6f7a8b9-c0d1-4e2f-9a3b-1c4d5e6f7a8b@185.146.176.13:443?security=tls&sni=javidnaman.iran&type=ws&host=javidnaman.iran&fp=chrome#%F0%9F%87%AC%F0%9F%87%AA%20GE%20%2320392%20%7C%20%40V2XCore%20%F0%9F%92%8E
