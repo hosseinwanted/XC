@@ -1,3 +1,4 @@
-trojan://opentunnel.net-wd3dzt4j9yoy@cat-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2320399%20%7C%20%40V2XCore%20%F0%9F%8E%AF
-trojan://opentunnel.net-rw8uuv207taq@ukt-2.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2321665%20%7C%20t.me/V2XCore%20%F0%9F%94%A5
-trojan://opentunnel.net-oqtxymz6gjl3@nlt-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2321718%20%7C%20t.me/V2XCore%20%F0%9F%91%91
+vless://b1a8ceea-6601-45b5-a674-7e5b64ab6f6f@203.24.103.67:2053?path=/Join---MARAMBASHI---Join---MARAMBASHI---Join---MARAMBASHI?ed=2560&security=tls&encryption=none&host=sub.divib.dynv6.net&type=ws&sni=sub.divib.dynv6.net#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%235465%20%7C%20t.me/V2XCore%20%F0%9F%94%B0
+trojan://opentunnel.net-wd3dzt4j9yoy@cat-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2321233%20%7C%20%40V2XCore%20%F0%9F%94%A5
+trojan://opentunnel.net-rw8uuv207taq@ukt-2.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2321775%20%7C%20t.me/V2XCore%20%F0%9F%91%91
+trojan://opentunnel.net-oqtxymz6gjl3@nlt-1.opensvr.net:443?security=tls&type=tcp&headerType=none#%F0%9F%87%BB%F0%9F%87%AC%20VG%20%2321780%20%7C%20t.me/V2XCore%20%F0%9F%94%A5
