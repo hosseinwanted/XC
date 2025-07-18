@@ -1,1 +1,1 @@
-vless://157448af-8ecf-4075-a9e9-b23a6a94899b@79.127.252.81:8443?security=tls&sni=lim-pe-01.fromblancwithlove.com&type=tcp#%F0%9F%87%B5%F0%9F%87%AA%20PE%20%2319889%20%7C%20%40V2XCore%20%E2%9C%A8
+vless://157448af-8ecf-4075-a9e9-b23a6a94899b@79.127.252.81:8443?security=tls&sni=lim-pe-01.fromblancwithlove.com&type=tcp#%F0%9F%87%B5%F0%9F%87%AA%20PE%20%2320119%20%7C%20t.me/V2XCore%20%F0%9F%8E%AF
