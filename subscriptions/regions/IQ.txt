@@ -1,1 +1,1 @@
-vless://88e51db8-dd45-4fc6-8be9-20b89421841e@t.v2-sajad.xnet.com.de:30001?security=none&encryption=none&headerType=http&type=tcp#%F0%9F%87%AE%F0%9F%87%B6%20IQ%20%2323515%20%7C%20t.me/V2XCore%20%F0%9F%91%91
+vless://88e51db8-dd45-4fc6-8be9-20b89421841e@t.v2-sajad.xnet.com.de:30001?security=none&encryption=none&headerType=http&type=tcp#%F0%9F%87%AE%F0%9F%87%B6%20IQ%20%2323272%20%7C%20%40V2XCore%20%F0%9F%91%91
