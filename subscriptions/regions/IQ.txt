@@ -1,2 +1,1 @@
-vless://88e51db8-dd45-4fc6-8be9-20b89421841e@t.v2-sajad.xnet.com.de:30001?security=none&encryption=none&headerType=http&type=tcp#%F0%9F%87%AE%F0%9F%87%B6%20IQ%20%2325273%20%7C%20%40V2XCore%20%F0%9F%9A%80
-vless://0ae41d09-04d2-4739-be46-61b00be9cc9c@s.tehdrantolidi.ir:80?path=/?ed=2087&security=none&encryption=none&host=ip-info-2.tehdrantolidi.ir&type=ws#%F0%9F%87%AE%F0%9F%87%B6%20IQ%20%2325698%20%7C%20t.me/V2XCore%20%E2%9A%9C%EF%B8%8F
+vless://88e51db8-dd45-4fc6-8be9-20b89421841e@t.v2-sajad.xnet.com.de:30001?security=none&encryption=none&headerType=http&type=tcp#%F0%9F%87%AE%F0%9F%87%B6%20IQ%20%2323134%20%7C%20%40V2XCore%20%F0%9F%94%B0
