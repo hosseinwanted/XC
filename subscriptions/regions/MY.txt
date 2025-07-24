@@ -1,1 +1,1 @@
-vless://d6e38f6b-9bf1-5cf6-918d-b1e5ba327f48@45.89.107.60:443?security=tls&sni=zula.ir&allowInsecure=1&fp=chrome&type=ws&path=/vless&host=45.89.107.60&encryption=none#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2325277%20%7C%20t.me/V2XCore%20%E2%9C%A8
+vless://d6e38f6b-9bf1-5cf6-918d-b1e5ba327f48@45.89.107.60:443?security=tls&sni=zula.ir&allowInsecure=1&fp=chrome&type=ws&path=/vless&host=45.89.107.60&encryption=none#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2324863%20%7C%20t.me/V2XCore%20%F0%9F%94%A5
