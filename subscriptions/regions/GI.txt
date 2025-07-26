@@ -1,2 +1,2 @@
-vless://f6fe292a-4775-4219-99f6-4af979ae93a5@95.164.6.201:443?type=ws&encryption=none&flow=&path=/qyytmews&security=tls&allowInsecure=1#%F0%9F%87%AC%F0%9F%87%AE%20GI%20%2322531%20%7C%20t.me/V2XCore%20%E2%9A%9C%EF%B8%8F
-vless://03852aa6-db01-4137-972d-14ebfb202f09@95.164.6.214:443?type=ws&encryption=none&flow=&path=/kcknkyws&security=tls&allowInsecure=1#%F0%9F%87%AC%F0%9F%87%AE%20GI%20%2322638%20%7C%20%40V2XCore%20%F0%9F%9A%80
+vless://f6fe292a-4775-4219-99f6-4af979ae93a5@95.164.6.201:443?type=ws&encryption=none&flow=&path=/qyytmews&security=tls&allowInsecure=1#%F0%9F%87%AC%F0%9F%87%AE%20GI%20%2322306%20%7C%20t.me/V2XCore%20%F0%9F%8E%AF
+vless://03852aa6-db01-4137-972d-14ebfb202f09@95.164.6.214:443?type=ws&encryption=none&flow=&path=/kcknkyws&security=tls&allowInsecure=1#%F0%9F%87%AC%F0%9F%87%AE%20GI%20%2322760%20%7C%20t.me/V2XCore%20%E2%9C%A8
