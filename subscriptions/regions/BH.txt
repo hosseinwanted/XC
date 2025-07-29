@@ -1,1 +1,1 @@
-vless://53fff6cc-b4ec-43e8-ade5-e0c42972fc33@185.253.117.24:80?encryption=none&security=none&type=ws&host=cdn.ir&path=/news#%F0%9F%87%A7%F0%9F%87%AD%20BH%20%2323548%20%7C%20t.me/V2XCore%20%F0%9F%94%B0
+vless://53fff6cc-b4ec-43e8-ade5-e0c42972fc33@185.253.117.24:80?encryption=none&security=none&type=ws&host=cdn.ir&path=/news#%F0%9F%87%A7%F0%9F%87%AD%20BH%20%2323874%20%7C%20t.me/V2XCore%20%F0%9F%91%91
