@@ -1,4 +1,4 @@
-vless://89b3cbba-e6ac-485a-9481-976a0415eab9@38.180.100.80:443?encryption=none&security=tls&sni=vz.ylks.xyz&type=ws&host=vz.ylks.xyz&path=%2F%3Fproxyip%3Dproxyip.oracle.fxxk.dedyn.io#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325330%20%7C%20%40V2XCore%20%F0%9F%9A%80
-ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@185.186.77.220:989#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325346%20%7C%20%40V2XCore%20%F0%9F%94%A5
-ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@194.71.126.31:989#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325666%20%7C%20t.me/V2XCore%20%F0%9F%91%91
-vless://20fda433-1864-433b-b3dd-8f119fe4cafd@217.196.104.83:8443?type=ws&encryption=none&host=happy.mianfeicf.lol&path=%2F%3Fed%3D2560&security=tls&sni=happy.mianfeicf.lol#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325904%20%7C%20%40V2XCore%20%F0%9F%92%8E
+vless://20fda433-1864-433b-b3dd-8f119fe4cafd@217.196.104.83:8443?type=ws&encryption=none&host=happy.mianfeicf.lol&path=%2F%3Fed%3D2560&security=tls&sni=happy.mianfeicf.lol#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325379%20%7C%20%40V2XCore%20%F0%9F%9A%80
+ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@194.71.126.31:989#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325474%20%7C%20%40V2XCore%20%F0%9F%8E%AF
+ss://YWVzLTI1Ni1jZmI6ZjhmN2FDemNQS2JzRjhwMw==@185.186.77.220:989#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2325523%20%7C%20t.me/V2XCore%20%E2%9C%A8
+vless://89b3cbba-e6ac-485a-9481-976a0415eab9@38.180.100.80:443?encryption=none&security=tls&sni=vz.ylks.xyz&type=ws&host=vz.ylks.xyz&path=%2F%3Fproxyip%3Dproxyip.oracle.fxxk.dedyn.io#%F0%9F%87%B7%F0%9F%87%B8%20RS%20%2327979%20%7C%20t.me/V2XCore%20%F0%9F%8E%AF
