@@ -1,5 +1,4 @@
-ss://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327557%20%7C%20t.me/V2XCore%20%E2%9A%A1%EF%B8%8F
-vless://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&encryption=none&type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327605%20%7C%20%40V2XCore%20%F0%9F%94%A5
-vless://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327702%20%7C%20%40V2XCore%20%E2%9A%9C%EF%B8%8F
-vless://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327855%20%7C%20%40V2XCore%20%E2%9A%9C%EF%B8%8F
-ss://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327865%20%7C%20%40V2XCore%20%E2%9A%9C%EF%B8%8F
+ss://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327493%20%7C%20t.me/V2XCore%20%F0%9F%8E%AF
+ss://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327985%20%7C%20t.me/V2XCore%20%F0%9F%92%8E
+vless://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2327994%20%7C%20t.me/V2XCore%20%E2%9C%A8
+vless://93defc2d-200d-4b2f-8baa-dd85e378e247@ckdll.kimjo.ir:8080?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%B4%F0%9F%87%B2%20OM%20%2328001%20%7C%20t.me/V2XCore%20%E2%9C%A8
