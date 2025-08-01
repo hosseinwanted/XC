@@ -1,7 +1,7 @@
-vless://0226ff6d-b500-430f-8291-96b56d677660@45.89.107.227:443?path=%2Fhqqprlws&security=tls&encryption=none&type=ws#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327366%20%7C%20t.me/V2XCore%20%F0%9F%9A%80
-vless://8c374da3-b3cb-4460-9098-0837973e228f@45.89.107.232:443?type=ws&encryption=none&flow=&path=/mfgdwhws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327381%20%7C%20%40V2XCore%20%E2%9A%9C%EF%B8%8F
-vless://6fe4cdfd-11a8-4d3b-94a4-4b735da523de@45.89.107.244:443?path=%2Fajnexnws&security=tls&encryption=none&type=ws#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327403%20%7C%20t.me/V2XCore%20%E2%9A%A1%EF%B8%8F
-vless://a396bc99-8614-4452-92e3-3c9f81c54588@45.89.107.235:443?type=ws&encryption=none&flow=&path=/attzctws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327408%20%7C%20t.me/V2XCore%20%E2%9A%9C%EF%B8%8F
-vless://36f00e93-3f4b-48ca-8f19-488c321ab931@45.89.107.229:443?type=ws&encryption=none&flow=&path=/fqopqrws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327418%20%7C%20%40V2XCore%20%E2%9A%A1%EF%B8%8F
-vless://acb30534-b06f-4629-b684-5fa712f3efd8@45.89.107.223:443?type=ws&encryption=none&flow=&path=/wxmgbmws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327434%20%7C%20%40V2XCore%20%F0%9F%91%91
-vless://87f1c3ae-e51a-4739-8e4a-d373d13f5bf8@45.128.54.6:443?type=ws&encryption=none&flow=&path=/kcnfrvws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2327449%20%7C%20%40V2XCore%20%F0%9F%94%B0
+vless://acb30534-b06f-4629-b684-5fa712f3efd8@45.89.107.223:443?type=ws&encryption=none&flow=&path=/wxmgbmws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328286%20%7C%20%40V2XCore%20%F0%9F%94%B0
+vless://8c374da3-b3cb-4460-9098-0837973e228f@45.89.107.232:443?type=ws&encryption=none&flow=&path=/mfgdwhws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328308%20%7C%20t.me/V2XCore%20%F0%9F%92%8E
+vless://36f00e93-3f4b-48ca-8f19-488c321ab931@45.89.107.229:443?type=ws&encryption=none&flow=&path=/fqopqrws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328331%20%7C%20%40V2XCore%20%E2%9A%9C%EF%B8%8F
+vless://a396bc99-8614-4452-92e3-3c9f81c54588@45.89.107.235:443?type=ws&encryption=none&flow=&path=/attzctws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328400%20%7C%20%40V2XCore%20%F0%9F%92%8E
+vless://6fe4cdfd-11a8-4d3b-94a4-4b735da523de@45.89.107.244:443?path=%2Fajnexnws&security=tls&encryption=none&type=ws#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328417%20%7C%20t.me/V2XCore%20%F0%9F%94%B0
+vless://0226ff6d-b500-430f-8291-96b56d677660@45.89.107.227:443?path=%2Fhqqprlws&security=tls&encryption=none&type=ws#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328436%20%7C%20%40V2XCore%20%F0%9F%8E%AF
+vless://87f1c3ae-e51a-4739-8e4a-d373d13f5bf8@45.128.54.6:443?type=ws&encryption=none&flow=&path=/kcnfrvws&security=tls&allowInsecure=1#%F0%9F%87%B2%F0%9F%87%BE%20MY%20%2328473%20%7C%20%40V2XCore%20%F0%9F%91%91
