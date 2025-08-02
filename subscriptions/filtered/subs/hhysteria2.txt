@@ -1,1 +1,1 @@
-hhysteria2://123456@192.3.85.237:443?security=tls&insecure=1&sni=bing.com#%F0%9F%87%BA%F0%9F%87%B8%20US%20%2322344%20%7C%20%40V2XCore%20%E2%9A%9C%EF%B8%8F
+hhysteria2://123456@192.3.85.237:443?security=tls&insecure=1&sni=bing.com#%F0%9F%87%BA%F0%9F%87%B8%20US%20%2323036%20%7C%20t.me/V2XCore%20%F0%9F%94%A5
